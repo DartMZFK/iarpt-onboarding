@@ -1,0 +1,496 @@
+<title>Карта вашего Телохранителя</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#2A0708; --g1:#C0342F; --g2:#A32229; --g3:#6E1226; --g4:#3D0A2C;
+  --ink:#FFF6F2; --ink-70:rgba(255,246,242,.72); --ink-88:rgba(255,246,242,.88);
+  --peach:#FFC9A3; --white:#FFFFFF; --red:#A32229;
+  --line:rgba(255,246,242,.34); --line-soft:rgba(255,246,242,.22); --fill:rgba(255,246,242,.10);
+  --sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif; --serif:'Playfair Display',Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--sans)}
+body{min-height:100vh;display:flex;justify-content:center;padding-inline:0}
+#app{width:100%;max-width:460px;min-height:100vh;background:linear-gradient(170deg,var(--g1) 0%,var(--g2) 42%,var(--g3) 74%,var(--g4) 100%);position:relative;overflow:hidden}
+#app::before{content:"";position:absolute;top:-140px;right:-120px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(255,168,120,.28) 0%,rgba(255,168,120,0) 70%);pointer-events:none}
+#app::after{content:"";position:absolute;bottom:-160px;left:-140px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(122,32,140,.35) 0%,rgba(122,32,140,0) 70%);pointer-events:none}
+.screen{position:relative;z-index:1;display:none;flex-direction:column;min-height:100vh;padding:24px 24px 32px;animation:rise .35s ease both}
+.screen.on{display:flex}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes shine{0%{background-position:180% 50%}100%{background-position:-80% 50%}}
+@keyframes pulse{0%,100%{opacity:.25;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
+@keyframes breathe{0%,100%{transform:scale(.92);opacity:.5}50%{transform:scale(1.08);opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{height:32px;width:auto;display:block;opacity:.96}
+.pill{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,246,242,.8);border:1px solid rgba(255,246,242,.4);border-radius:999px;padding:7px 14px;white-space:nowrap}
+.pill.solid{color:#3D0A0C;background:var(--peach);border-color:var(--peach)}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--peach)}
+.eyebrow.quiet{font-size:11px;letter-spacing:.16em;color:var(--ink-70)}
+h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.1;text-transform:uppercase;color:var(--white);text-wrap:balance}
+h2{font-family:var(--serif);font-weight:600;font-size:27px;line-height:1.18;color:var(--white);text-wrap:balance}
+p{font-size:16px;line-height:1.5;color:var(--ink-88);text-wrap:pretty}
+.stack{display:flex;flex-direction:column;gap:14px}
+.btn{width:100%;min-height:60px;border:none;border-radius:999px;background:linear-gradient(105deg,#fff 0%,#fff 34%,#FFEBDA 44%,#FFD7B8 50%,#FFEBDA 56%,#fff 68%,#fff 100%);background-size:220% 100%;animation:shine 3.4s linear infinite;color:var(--red);font-family:var(--sans);font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 10px 30px rgba(40,5,10,.35);transition:transform .15s ease;display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none}
+.btn:hover{transform:translateY(-1px)}.btn:active{transform:translateY(1px)}
+.btn:focus-visible,.opt:focus-visible,.ghost:focus-visible,.back:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.btn[disabled]{opacity:.55;cursor:default;animation:none;transform:none}
+.ghost{width:100%;min-height:56px;border:1px solid rgba(255,246,242,.55);border-radius:999px;background:transparent;color:var(--white);font-family:var(--sans);font-size:16px;font-weight:700;cursor:pointer;transition:background .15s ease;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.ghost:hover{background:rgba(255,246,242,.16)}
+.link{border:none;background:transparent;color:rgba(255,246,242,.7);font-family:var(--sans);font-size:13px;font-weight:600;text-decoration:underline;cursor:pointer;margin:14px auto 0}
+.link:hover{color:#fff}
+.hint{text-align:center;font-size:12px;line-height:1.45;color:var(--ink-70)}
+.card{border-radius:20px;border:1px solid var(--line-soft);background:rgba(255,246,242,.08);padding:14px 18px 14px 14px;display:flex;align-items:center;gap:16px}
+.card img{width:86px;height:86px;flex:none;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(40,5,10,.45))}
+.card b{font-family:var(--serif);font-weight:500;font-size:19px;line-height:1.18;color:#fff;display:block}
+.card span{font-size:13px;line-height:1.45;color:rgba(255,246,242,.8)}
+.list{display:grid;gap:10px}
+.li{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.5;color:rgba(255,246,242,.9)}
+.li::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--peach);margin-top:8px;flex:none}
+.box{border-radius:20px;border:1px solid rgba(255,246,242,.26);background:rgba(255,246,242,.10);padding:18px 20px}
+.box p{margin-top:8px;font-size:15px;color:#fff}
+.box small{display:block;margin-top:12px;font-size:13px;line-height:1.5;color:rgba(255,246,242,.78)}
+.back{width:38px;height:38px;flex:none;border-radius:50%;border:1px solid rgba(255,246,242,.45);background:transparent;color:var(--ink);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.back:hover{background:rgba(255,246,242,.14)}
+label{display:flex;flex-direction:column;gap:9px}
+label span{font-size:15px;font-weight:600;color:#fff}
+input,textarea{width:100%;min-height:56px;border-radius:16px;border:1px solid rgba(255,246,242,.36);background:var(--fill);color:#fff;font-size:16px;padding:0 18px;outline:none;font-family:var(--sans)}
+input:focus,textarea:focus{border-color:#fff;background:rgba(255,246,242,.16)}
+input::placeholder,textarea::placeholder{color:rgba(255,246,242,.5)}
+textarea{min-height:130px;padding:16px 18px;line-height:1.5;resize:none}
+.err{font-size:13px;color:var(--peach);min-height:18px}
+.bar{flex:1;height:4px;border-radius:999px;background:rgba(255,246,242,.22);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;background:#fff;transition:width .35s cubic-bezier(.4,0,.2,1)}
+.counter{font-size:12px;font-weight:700;color:rgba(255,246,242,.8);min-width:62px;text-align:right;font-variant-numeric:tabular-nums}
+.note{font-size:14px;line-height:1.5;color:rgba(255,246,242,.84);border-left:2px solid rgba(255,201,163,.75);padding-left:12px}
+.q{font-family:var(--serif);font-weight:600;font-size:25px;line-height:1.22;color:#fff}
+.multi{font-size:13px;font-weight:600;color:rgba(255,246,242,.74)}
+.opts{display:flex;flex-direction:column;gap:9px;padding-bottom:18px}
+.opt{width:100%;text-align:left;border:1px solid var(--line);border-radius:18px;background:var(--fill);color:var(--ink);padding:16px 18px;font-family:var(--sans);font-size:15px;line-height:1.45;font-weight:500;cursor:pointer;transition:background .15s,border-color .15s,transform .12s}
+.opt:hover{border-color:#fff}.opt:active{transform:scale(.99)}
+.opt.on{background:#fff;color:var(--red);border-color:#fff}
+.dots{display:flex;gap:9px}.dots i{width:11px;height:11px;border-radius:50%;background:#fff;animation:pulse 1.1s ease-in-out infinite}
+.dots i:nth-child(2){background:var(--peach);animation-delay:.18s}.dots i:nth-child(3){background:#E8A3C8;animation-delay:.36s}
+.center{align-items:center;justify-content:center;text-align:center;gap:22px;padding:40px 32px}
+.orb{width:74px;height:74px;border-radius:50%;background:rgba(255,246,242,.18);border:1px solid rgba(255,246,242,.4);animation:breathe 3.4s ease-in-out infinite}
+.result{border-radius:26px;background:rgba(40,5,20,.42);border:1px solid var(--line-soft);padding:22px;display:flex;flex-direction:column;gap:14px}
+.result h2{font-size:26px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-size:14px;line-height:1.45}
+.kv dt{color:var(--ink-70)}.kv dd{color:#fff;font-weight:700;text-align:right}
+.divider{height:1px;background:rgba(255,246,242,.2)}
+.sp{flex:1;min-height:22px}
+.grow{flex:1}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt18{margin-top:18px}.mt22{margin-top:22px}.mt26{margin-top:26px}.mt28{margin-top:28px}.mt40{margin-top:40px}
+</style>
+
+<div id="app">
+
+<!-- ЛЕНДИНГ -->
+<section class="screen on" id="s-landing">
+  <div class="top"><img class="logo" src="__LOGO__" alt="iARPT"><div class="pill">21 вопрос · 4 минуты</div></div>
+  <div class="stack mt28">
+    <div class="eyebrow">Диагностика по методу iARPT</div>
+    <h1>Кто внутри вас принимает решения, когда вы подходите к важному?</h1>
+    <p>Персональная карта: как именно ваше подсознание вас останавливает, где это живёт в теле и когда было записано.</p>
+  </div>
+  <button class="btn mt22" data-go="welcome">Пройти диагностику</button>
+  <div class="hint mt12">Бесплатно · 4 минуты</div>
+  <div class="card mt22"><img src="__CARD__" alt=""><div><b>Именная карта, 8 страниц</b><span>Собирается под ваши ответы. PDF — сразу после последнего вопроса</span></div></div>
+  <div class="list mt26">
+    <div class="eyebrow quiet">Что вы узнаете</div>
+    <div class="li">Свой тип саботажа из четырёх</div>
+    <div class="li">Соматическую подпись — где тело нажимает на тормоз</div>
+    <div class="li">Скрытую выгоду, которую даёт вам ваша проблема</div>
+    <div class="li">В каком возрасте был записан ваш код (0–7 лет)</div>
+    <div class="li">Какой темп изменений для вас безопасен, а какой даст откат</div>
+  </div>
+  <div class="box mt22">
+    <div class="eyebrow quiet">Кому это</div>
+    <p>Тем, кто уже много понимает про себя — и именно поэтому ничего не может изменить.</p>
+    <small>Автор: Анна Чернигова — клинический психолог, кандидат наук, автор метода iARPT, 20 000+ часов практики.</small>
+  </div>
+  <div class="sp"></div>
+  <button class="ghost" data-go="welcome">Пройти диагностику</button>
+  <div class="hint mt12">Результаты не передаются третьим лицам. Это карта паттернов, а не медицинское заключение.</div>
+</section>
+
+<!-- ЗНАКОМСТВО -->
+<section class="screen" id="s-welcome">
+  <button class="back" data-go="landing" aria-label="Назад">←</button>
+  <div class="stack mt40"><div class="eyebrow">Знакомство</div><h2>Карта будет именной</h2></div>
+  <div class="stack mt26" style="gap:18px">
+    <label><span>Как к вам обращаться?</span><input id="f-name" type="text" maxlength="30" placeholder="Так будет подписана ваша карта" autocomplete="given-name"></label>
+    <label><span>Сколько вам лет?</span><input id="f-age" type="number" inputmode="numeric" min="1" max="99" placeholder="Например, 38"></label>
+    <div class="err" id="f-err"></div>
+  </div>
+  <button class="btn" id="b-start">Начать</button>
+  <div class="hint mt12" id="welcome-hint">21 вопрос, 6 шагов. Никто, кроме вас, не увидит ответы.</div>
+  <div class="grow"></div>
+</section>
+
+<!-- ДО 18 -->
+<section class="screen center" id="s-underage">
+  <h2>Диагностика рассчитана на взрослых</h2>
+  <p>Спасибо за интерес. Мы не собираем дальше никаких данных.</p>
+  <button class="ghost mt8" style="max-width:240px" data-go="landing">Вернуться</button>
+</section>
+
+<!-- ПАУЗА ПЕРЕД ТЕЛОМ -->
+<section class="screen center" id="s-pause">
+  <div class="orb"></div>
+  <h2>Сейчас будет короткое упражнение</h2>
+  <p>10 секунд. Не пропускайте — это самая точная часть диагностики.</p>
+  <button class="btn" style="max-width:300px" id="b-pause">Я готов(а)</button>
+</section>
+
+<!-- ВОПРОС -->
+<section class="screen" id="s-q" style="padding-top:22px">
+  <div class="top" style="gap:14px"><button class="back" id="b-back" aria-label="Назад">←</button><div class="bar"><i id="bar"></i></div><div class="counter" id="counter"></div></div>
+  <div class="stack mt28" style="gap:12px">
+    <div class="eyebrow" id="q-step"></div>
+    <p class="note" id="q-note" hidden></p>
+    <div class="q" id="q-title"></div>
+    <div class="multi" id="q-multi" hidden>Можно выбрать несколько</div>
+  </div>
+  <div class="opts mt18" id="q-opts"></div>
+  <button class="btn" id="b-next" hidden>Дальше</button>
+  <div class="grow"></div>
+</section>
+
+<!-- ЦЕЛЬ -->
+<section class="screen" id="s-goal" style="padding-top:22px">
+  <div class="top" style="gap:14px"><button class="back" id="b-back2" aria-label="Назад">←</button><div class="bar"><i style="width:96%"></i></div><div class="counter">Почти</div></div>
+  <div class="stack mt28" style="gap:12px"><div class="eyebrow">Чтобы карта была точнее</div><div class="q">Одной фразой: что вы хотите, чтобы изменилось через 6 месяцев?</div></div>
+  <textarea id="f-goal" class="mt18" maxlength="200" placeholder="Необязательно, но эта фраза попадёт в вашу карту"></textarea>
+  <button class="btn mt22" id="b-finish">Собрать карту</button>
+  <button class="link" id="b-skip">Пропустить</button>
+  <div class="grow"></div>
+</section>
+
+<!-- СБОРКА -->
+<section class="screen center" id="s-loading">
+  <div class="dots"><i></i><i></i><i></i></div>
+  <div style="font-family:var(--serif);font-size:25px;line-height:1.22;color:#fff" id="load-line">Считываю ваши ответы…</div>
+  <div style="font-size:14px;color:var(--ink-70)">Не закрывайте страницу</div>
+</section>
+
+<!-- ГОТОВО -->
+<section class="screen" id="s-done">
+  <div class="top"><img class="logo" src="__LOGO__" alt="iARPT"><div class="pill solid">Карта собрана</div></div>
+  <div class="result mt26">
+    <h2 id="done-title">Ваша карта собрана</h2>
+    <p style="font-size:15px">Она именная — 8 страниц. Внизу — краткая версия, полная — в PDF.</p>
+    <div class="divider"></div>
+    <dl class="kv" id="kv"></dl>
+  </div>
+  <button class="btn mt18" id="b-pdf">Скачать мою карту (PDF)</button>
+  <div class="hint mt12" id="pdf-status"></div>
+  <div class="list mt26">
+    <div class="eyebrow quiet">Внутри карты</div>
+    <div class="li">Индекс разрыва «знаю / делаю» — почему понимание не превращается в результат</div>
+    <div class="li">Как он вас останавливает — ваш тип саботажа в вашей зоне</div>
+    <div class="li">Где он живёт в теле — соматическая подпись</div>
+    <div class="li">Что он вам за это платит — скрытая выгода</div>
+    <div class="li">Когда он был записан и ваш темп — как с вами можно работать</div>
+  </div>
+  <div class="sp"></div>
+  <div class="hint">Результаты не передаются третьим лицам. Это карта паттернов, а не медицинское заключение.</div>
+  <button class="link" id="b-restart">Пройти заново</button>
+</section>
+
+</div>
+
+<script>__FONTS__ __IMGS__</script>
+<script>__CONTENT__</script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const QS=[
+ {id:1,step:'Шаг 1 из 6 — Где вы сейчас',title:'Что сейчас сильнее всего держит вашу жизнь на паузе?',opts:[
+  {label:'Деньги. Доход стоит на месте, есть потолок. Трудно назвать цену, попросить, взять больше.',S:'Деньги'},
+  {label:'Отношения. Одиночество — или один и тот же сценарий с разными людьми.',S:'Отношения'},
+  {label:'Опора. Неуверенность, синдром самозванца, выгорание, страх заявить о себе.',S:'Опора'}]},
+ {id:2,step:'Шаг 1 из 6 — Где вы сейчас',title:'Как давно вы понимаете, в чём ваша проблема?',opts:[
+  {label:'Недавно. Ещё разбираюсь.',G:0},{label:'Год–два.',G:20},{label:'Три–пять лет.',G:30},{label:'Больше пяти лет. Я давно всё про себя знаю.',G:40}]},
+ {id:3,step:'Шаг 1 из 6 — Где вы сейчас',title:'Что вы уже пробовали? Отметьте всё, что было.',multi:true,opts:[
+  {label:'Книги, лекции, подкасты по психологии',G:7},{label:'Психолог или психотерапия',G:7},{label:'Коуч или наставник',G:7},{label:'Марафоны, онлайн-курсы, вебинары',G:7},{label:'Расстановки, телесные практики, регрессии',G:6},{label:'Медитации, аффирмации, дневники благодарности',G:6},{label:'Ничего из этого',G:0,none:true}]},
+ {id:4,step:'Шаг 1 из 6 — Где вы сейчас',title:'Что обычно происходило после?',opts:[
+  {label:'Менялось — и держится до сих пор.',G:0},{label:'Подъём на одну–три недели, потом откат к прежнему.',G:20},{label:'Понимание росло. Жизнь — нет.',G:20},{label:'Ничего не менялось.',G:15}]},
+ {id:5,step:'Шаг 2 из 6 — Четыре ситуации',title:'Впереди шаг, который реально меняет уровень жизни: крупный контракт, серьёзный разговор, выход на публику. До него — неделя. Что чаще всего происходит с вами в эту неделю?',opts:[
+  {label:'Тону в мелких делах. «Нет времени подготовиться». Откладываю до последнего дня.',T:'Кома'},
+  {label:'Что-то случается извне: заболеваю, ссорюсь, срывается договорённость.',T:'Авария'},
+  {label:'Готовлюсь как следует — но в сам момент тело подводит: голос, дыхание, мысли исчезают.',T:'Замирание'},
+  {label:'Ищу ещё информацию — курс, мнение, книгу. Чтобы «быть по-настоящему готовым».',T:'Анализ'}]},
+ {id:6,step:'Шаг 2 из 6 — Четыре ситуации',title:'Когда что-то начинает получаться — доход растёт, отношения теплеют, проект пошёл — что вы замечаете за собой?',opts:[
+  {label:'Расслабляюсь и перестаю делать то, что работало.',T:'Кома'},
+  {label:'Как будто нарочно создаю проблему: конфликт, крупная трата, срыв.',T:'Авария'},
+  {label:'Поднимается тревога: «этого не может быть, сейчас что-то случится». Замираю.',T:'Замирание'},
+  {label:'Начинаю сомневаться, перепроверять, искать подвох.',T:'Анализ'}]},
+ {id:7,step:'Шаг 2 из 6 — Четыре ситуации',title:'{name}вспомните последний раз, когда вы точно знали, что нужно сделать — и не сделали. Что было в тот момент?',opts:[
+  {label:'Просто не встал(а). Взял(а) телефон. День прошёл.',T:'Кома'},
+  {label:'Помешали обстоятельства, которые «от меня не зависели».',T:'Авария'},
+  {label:'Физически не смог(ла): сжалось, оцепенел(а), стало плохо.',T:'Замирание'},
+  {label:'Решил(а), что ещё не время. Надо доработать.',T:'Анализ'}]},
+ {id:8,step:'Шаг 2 из 6 — Четыре ситуации',title:'После неудачи или срыва вы обычно…',opts:[
+  {label:'Выпадаю на несколько дней. Апатия, ничего не хочется.',T:'Кома'},
+  {label:'Нахожу причину снаружи, злюсь, рву отношения или планы.',T:'Авария'},
+  {label:'Обесцениваю себя: «я не способен(на)». Замолкаю.',T:'Замирание'},
+  {label:'Разбираю, почему так вышло. Читаю. Анализирую. И снова не делаю.',T:'Анализ'}]},
+ {id:9,pause:true,step:'Шаг 3 из 6 — Тело',title:'{name}закройте глаза. Представьте, что ваша главная цель уже достигнута — прямо сейчас, сегодня. Побудьте в этом 10 секунд. Откройте глаза. Где первым отозвалось тело?',opts:[
+  {label:'Горло, челюсть, плечи. Сжалось, захотелось сглотнуть или откашляться.',B:'Горло'},
+  {label:'Грудь. Тяжесть, теснота, дыхание стало короче.',B:'Грудь'},
+  {label:'Живот, солнечное сплетение. Свернулось, холод, лёгкая тошнота.',B:'Живот'},
+  {label:'Ничего не почувствовал(а). Как будто выключилось.',B:'Отключение'},
+  {label:'Стало легко и тепло.',B:'Нет реакции'}]},
+ {id:10,step:'Шаг 3 из 6 — Тело',title:'А теперь другое. Представьте, что всё остаётся как есть ещё пять лет. Та же работа, те же деньги, те же отношения. Что первое почувствовали?',opts:[
+  {label:'Облегчение. Хоть и неловко в этом признаться.',Vstrong:true},{label:'Тяжесть, тоску.'},{label:'Панику: «только не это».'},{label:'Ничего.',Boff:true}]},
+ {id:11,step:'Шаг 3 из 6 — Тело',title:'В каких ситуациях тело «предаёт» вас чаще всего? Отметьте все, что подходят.',multi:true,opts:[
+  {label:'Назвать цену, попросить денег, обсудить оплату',S2:'Деньги'},
+  {label:'Выступить, быть на виду, записать видео',S2:'Опора'},
+  {label:'Серьёзный разговор с близким человеком',S2:'Отношения'},
+  {label:'Сказать «нет», отказать',S2:'Опора'},
+  {label:'Принять важное решение',Boff:true},
+  {label:'Когда меня хвалят или замечают',S2:'Опора',F:'Эдипальная'}]},
+ {id:12,step:'Шаг 4 из 6 — Честный вопрос',note:'Следующие три вопроса — самые неудобные. Отвечайте не так, как правильно, а так, как есть. Никто, кроме вас, эти ответы не увидит.',title:'{name}представьте: цель исполнилась завтра. Что первым изменится в отношениях с близкими?',opts:[
+  {label:'Кто-то отдалится, будет завидовать или осуждать. Я стану «не своим».',V:'Принадлежность'},
+  {label:'От меня начнут ждать большего — и я не смогу это контролировать.',V:'Контроль'},
+  {label:'Мне перестанут помогать и сочувствовать. Всё придётся тянуть самому(ой).',V:'Освобождение'},
+  {label:'Ничего не изменится.',V:'—'}]},
+ {id:13,step:'Шаг 4 из 6 — Честный вопрос',title:'Что ваша нынешняя ситуация позволяет вам НЕ делать?',opts:[
+  {label:'Не выделяться. Не быть мишенью.',V:'Принадлежность'},
+  {label:'Ни от кого не зависеть. Никому не открываться.',V:'Контроль'},
+  {label:'Не брать полную ответственность. Не рисковать.',V:'Освобождение'},
+  {label:'Ничего. Она мне только мешает.',V:'—'}]},
+ {id:14,step:'Шаг 4 из 6 — Честный вопрос',title:'Закончите фразу: «Если я стану по-настоящему {segWord}, то…»',opts:[
+  {label:'…я стану чужим для своих.',V:'Принадлежность'},
+  {label:'…меня могут использовать или бросить.',V:'Контроль'},
+  {label:'…от меня будут требовать — и я не выдержу.',V:'Освобождение'},
+  {label:'…ничего плохого не случится.',V:'—'}]},
+ {id:15,step:'Шаг 5 из 6 — Корень',title:'Деньги. Что из этого больше похоже на вас?',opts:[
+  {label:'Сколько бы ни было — «мало». Страх, что отберут. Либо коплю и не трачу, либо спускаю всё в ноль.',F:'Оральная'},
+  {label:'Главное — контроль. Всё считаю, не выношу, когда деньгами распоряжаются другие. Трудно и платить, и отпускать.',F:'Анальная'},
+  {label:'Важно, чтобы не меньше, чем у других. Чужой успех рядом раздражает или обесценивает мой.',F:'Эдипальная'}]},
+ {id:16,step:'Шаг 5 из 6 — Корень',title:'Отношения. Какой сценарий повторяется?',opts:[
+  {label:'Выбираю тех, кто «даёт». Боюсь остаться без. Растворяюсь в человеке.',F:'Оральная'},
+  {label:'Борьба за власть и границы: кто главный, кто прав. Либо контролирую, либо подчиняюсь — и злюсь.',F:'Анальная'},
+  {label:'Недоступные партнёры, треугольники, соперничество. Нужно доказать, что я лучше.',F:'Эдипальная'}]},
+ {id:17,step:'Шаг 5 из 6 — Корень',title:'Кто-то рядом получил то, чего хотите вы. Что внутри в первую секунду?',opts:[
+  {label:'Пустота. «Мне никогда не хватит».',F:'Оральная'},
+  {label:'Раздражение: «неправильно сделал, я бы лучше». Хочется проверить и поправить.',F:'Анальная'},
+  {label:'Сравнение. Зависть — и тут же стыд за неё. Или обесценивание: «повезло».',F:'Эдипальная'}]},
+ {id:18,step:'Шаг 5 из 6 — Корень',title:'Атмосфера вашего детства — что ближе? Без подробностей.',opts:[
+  {label:'Родителям было не до меня. Нестабильно. Я рано стал(а) сам(а) по себе.',F:'Оральная'},
+  {label:'Строгий порядок. Стыд. «Ты должен». Наказания за своеволие.',F:'Анальная'},
+  {label:'Сравнивали с другими. «Будь как…». Конкуренция за внимание, любимчики.',F:'Эдипальная'},
+  {label:'Не помню / не хочу отвечать.'}]},
+ {id:19,step:'Шаг 6 из 6 — Как с вами работать',title:'Недавняя жёсткая критика или провал. Что с вами было в первые сутки?',opts:[
+  {label:'Разозлился(ась), доказал(а), пошёл(шла) дальше.',R:'Активный'},
+  {label:'Долго прокручивал(а) в голове, но за пару дней собрался(ась).',R:'Структурный'},
+  {label:'«Рассыпался(ась)». Ощущение ничтожности. Восстанавливался(ась) неделю и дольше.',R:'Бережный'}]},
+ {id:20,step:'Шаг 6 из 6 — Как с вами работать',title:'Что восстанавливает вас быстрее?',opts:[
+  {label:'Действие. Что-то сделать, переключиться.',R:'Активный'},
+  {label:'Разговор, план, структура. Понять, что делать дальше.',R:'Структурный'},
+  {label:'Тишина, одиночество, время. Чтобы никто не трогал.',R:'Бережный'}]},
+ {id:21,step:'Шаг 6 из 6 — Как с вами работать',title:'Как на вас действует «просто встань и сделай»?',opts:[
+  {label:'Работает, если цель ясна.',R:'Активный'},
+  {label:'Работает недолго. Потом откат.',R:'Структурный'},
+  {label:'После таких рывков мне хуже: срыв или апатия на недели.',R:'Бережный'}]},
+ {id:22,step:'Чтобы карта была точнее',title:'Чем вы занимаетесь?',opts:[
+  {label:'Свой бизнес / предприниматель',C:'biz'},{label:'Найм, руководящая позиция',C:'lead'},{label:'Найм, специалист',C:'spec'},{label:'Помогающий практик: психолог, коуч, нутрициолог, наставник',C:'helper'},{label:'Творческая профессия, эксперт, автор',C:'author'},{label:'Сейчас в паузе / ищу себя',C:'pause'}]}
+];
+const st={screen:'landing',i:0,name:'',age:'',goal:'',answers:{},multi:[]};
+
+// ---------- навигация
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$('#s-'+id).classList.add('on');window.scrollTo({top:0});st.screen=id;}
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.go)));
+$('#f-name').addEventListener('input',e=>{st.name=e.target.value;$('#welcome-hint').textContent=st.name.trim()?st.name.trim()+', впереди 21 вопрос — 6 шагов, около 4 минут.':'21 вопрос, 6 шагов. Никто, кроме вас, не увидит ответы.';});
+$('#f-age').addEventListener('input',e=>st.age=e.target.value);
+$('#f-goal').addEventListener('input',e=>st.goal=e.target.value);
+$('#b-start').addEventListener('click',()=>{
+  const n=st.name.trim(),a=parseInt(st.age,10);
+  if(n.length<2){$('#f-err').textContent='Напишите, как к вам обращаться — так будет подписана карта.';$('#f-name').focus();return;}
+  if(!a||a<1||a>99){$('#f-err').textContent='Укажите возраст числом.';$('#f-age').focus();return;}
+  $('#f-err').textContent='';
+  if(a<18)return show('underage');
+  goTo(0);
+});
+$('#b-pause').addEventListener('click',()=>{renderQ();show('q');});
+$('#b-back').addEventListener('click',()=>{if(st.i===0)return show('welcome');goTo(st.i-1,true);});
+$('#b-back2').addEventListener('click',()=>goTo(QS.length-1,true));
+$('#b-next').addEventListener('click',()=>{const q=QS[st.i];if(!st.multi.length)return;st.answers[q.id]=st.multi.slice();goTo(st.i+1);});
+$('#b-finish').addEventListener('click',finish);$('#b-skip').addEventListener('click',()=>{st.goal='';finish();});
+$('#b-restart').addEventListener('click',()=>{st.i=0;st.answers={};st.multi=[];st.goal='';$('#f-goal').value='';$('#pdf-status').textContent='';show('landing');});
+
+function segWord(){return {'Деньги':'богатым','Отношения':'любимым','Опора':'уверенным'}[(st.answers[1]||{}).S]||'уверенным';}
+function fill(t){const n=st.name.trim();return t.replace('{name}',n?n+', ':'').replace('{segWord}',segWord());}
+function goTo(i,back){
+  if(i>=QS.length){show('goal');return;}
+  st.i=i;const q=QS[i];const prev=st.answers[q.id];
+  st.multi=(q.multi&&Array.isArray(prev))?prev.slice():[];
+  if(q.pause&&!back){show('pause');return;}
+  renderQ();show('q');
+}
+function renderQ(){
+  const q=QS[st.i];
+  $('#q-step').textContent=q.step;$('#q-title').textContent=fill(q.title);
+  $('#q-note').hidden=!q.note;$('#q-note').textContent=q.note||'';
+  $('#q-multi').hidden=!q.multi;$('#b-next').hidden=!q.multi;$('#b-next').disabled=!st.multi.length;
+  $('#counter').textContent=(st.i+1)+' / '+QS.length;$('#bar').style.width=Math.round(st.i/QS.length*100)+'%';
+  const box=$('#q-opts');box.innerHTML='';
+  q.opts.forEach(o=>{
+    const b=document.createElement('button');b.type='button';b.className='opt'+(st.multi.includes(o)?' on':'');b.textContent=o.label;
+    b.addEventListener('click',()=>{
+      if(q.multi){
+        if(o.none){st.multi=st.multi.includes(o)?[]:[o];}
+        else{const k=st.multi.indexOf(o);if(k>-1)st.multi.splice(k,1);else{st.multi=st.multi.filter(x=>!x.none);st.multi.push(o);}}
+        [...box.children].forEach((el,j)=>el.classList.toggle('on',st.multi.includes(q.opts[j])));
+        $('#b-next').disabled=!st.multi.length;return;
+      }
+      st.answers[q.id]=o;goTo(st.i+1);
+    });
+    box.appendChild(b);
+  });
+}
+
+// ---------- подсчёт
+function mode(list){const t={};list.forEach(v=>{if(v)t[v]=(t[v]||0)+1;});const keys=Object.keys(t).sort((a,b)=>t[b]-t[a]);return {top:keys[0]||'',count:t[keys[0]]||0,second:keys[1]||'',count2:t[keys[1]]||0,all:t};}
+function scores(){
+  const a=st.answers;const pick=(id,k)=>(a[id]&&!Array.isArray(a[id]))?a[id][k]:undefined;
+  const S=pick(1,'S')||'Опора';
+  let G=(pick(2,'G')||0)+(pick(4,'G')||0);if(Array.isArray(a[3]))G+=a[3].reduce((s,o)=>s+(o.G||0),0);G=Math.min(100,G);
+  const Gl=G>=80?4:G>=55?3:G>=30?2:1;
+  const tm=mode([pick(5,'T'),pick(6,'T'),pick(7,'T'),pick(8,'T')]);
+  let T=tm.top||'Анализ',T2='';let Tconf='выражен';
+  if(tm.count===2&&tm.count2===2){T=pick(5,'T');T2=(T===tm.top)?tm.second:tm.top;Tconf='смешанный';}
+  else if(tm.count===2)Tconf='с элементами';
+  let B=pick(9,'B')||'Отключение';
+  const Vs=[pick(12,'V'),pick(13,'V'),pick(14,'V')];const vm=mode(Vs.filter(x=>x&&x!=='—'));
+  const Vstrong=!!(a[10]&&a[10].Vstrong);let V=vm.top||'Не осознана';
+  const F0=[pick(15,'F'),pick(16,'F'),pick(17,'F'),pick(18,'F')];const fm=mode(F0);
+  let F=fm.top||'Оральная';
+  if(fm.second&&fm.count===fm.count2){const pri={'Деньги':pick(15,'F'),'Отношения':pick(16,'F'),'Опора':pick(17,'F')}[S];if(pri)F=pri;}
+  const rm=mode([pick(19,'R'),pick(20,'R'),pick(21,'R')]);let R=rm.top||'Структурный';if(rm.second&&rm.count===rm.count2)R=pick(21,'R')||R;
+  let S2='',conflict=false;
+  if(Array.isArray(a[11])&&a[11].length){const sm=mode(a[11].map(o=>o.S2));if(sm.top&&sm.top!==S&&sm.count>=2){S2=sm.top;conflict=true;}}
+  const C=pick(22,'C')||'';
+  return {S,G,Gl,T,T2,Tconf,B,V,Vstrong,F,R,S2,conflict,C};
+}
+
+// ---------- финиш
+function finish(){
+  show('loading');const L=$('#load-line');L.textContent='Считываю ваши ответы…';
+  setTimeout(()=>L.textContent='Собираю карту вашего Телохранителя…',1000);
+  setTimeout(()=>L.textContent='Готовлю именной PDF — 8 страниц…',2000);
+  setTimeout(()=>{renderDone();show('done');},3000);
+}
+function renderDone(){
+  const s=scores(),n=st.name.trim();
+  $('#done-title').textContent=n?n+', ваша карта собрана':'Ваша карта собрана';
+  const Gt=PDF_CONTENT.G[s.Gl].title;
+  const rows=[['Главная точка',s.S],['Индекс разрыва «знаю / делаю»',s.G+' — '+Gt],['Как он вас останавливает',s.T2?s.T+' + '+s.T2:s.T],['Где он живёт в теле',s.B],['Что он вам за это платит',s.V],['Когда он был записан',s.F],['Ваш темп',s.R]];
+  $('#kv').innerHTML=rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('');
+}
+function token(s){const m={S:{'Деньги':'M','Отношения':'L','Опора':'O'},T:{'Кома':'K','Авария':'A','Замирание':'Z','Анализ':'N'},B:{'Горло':'G','Грудь':'C','Живот':'J','Отключение':'X','Нет реакции':'W'},V:{'Принадлежность':'P','Контроль':'K','Освобождение':'F','Не осознана':'U'},F:{'Оральная':'1','Анальная':'2','Эдипальная':'3'},R:{'Активный':'A','Структурный':'S','Бережный':'B'}};return m.S[s.S]+m.T[s.T]+m.B[s.B]+'_'+m.V[s.V]+m.F[s.F]+m.R[s.R]+s.Gl;}
+
+// ---------- PDF
+function yearsWord(n){const a=n%10,b=n%100;if(b>=11&&b<=14)return 'лет';if(a===1)return 'год';if(a>=2&&a<=4)return 'года';return 'лет';}
+function buildPdf(){
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:'a4'});
+  doc.addFileToVFS('s.ttf',FONTS.sans);doc.addFont('s.ttf','S','normal');
+  doc.addFileToVFS('sb.ttf',FONTS.sansb);doc.addFont('sb.ttf','S','bold');
+  doc.addFileToVFS('f.ttf',FONTS.serif);doc.addFont('f.ttf','F','normal');
+  doc.addFileToVFS('fb.ttf',FONTS.serifb);doc.addFont('fb.ttf','F','bold');
+  const W=210,H=297,M=24,CW=W-2*M;const s=scores(),C=PDF_CONTENT,name=st.name.trim(),age=parseInt(st.age,10);
+  const RED=[187,44,45],DARK=[42,7,8],INK=[40,28,30],MUTED=[120,96,100],PEACH=[255,201,163],CREAM=[252,247,243],LINE=[228,214,210];
+  let y=0,page=0;const LH=sz=>sz*0.3528*1.15;
+  const num=()=>{page++;if(page>1){doc.addImage(IMGS.logoR,'PNG',W-M-11,M-4,11,11.7);doc.setFont('S','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);doc.text('Карта вашего Телохранителя · '+name,M,H-12);doc.text(String(page),W-M,H-12,{align:'right'});}};
+  const newPage=()=>{doc.addPage();doc.setFillColor(...CREAM);doc.rect(0,0,W,H,'F');y=M+4;num();};
+  const eyebrow=t=>{doc.setFont('S','bold');doc.setFontSize(8.5);doc.setTextColor(...RED);doc.text(t.toUpperCase(),M,y,{charSpace:0.6});y+=9;};
+  const h=(t,size)=>{const sz=size||19;doc.setFont('F','bold');doc.setFontSize(sz);doc.setTextColor(...DARK);const ls=doc.splitTextToSize(t,CW-16);doc.text(ls,M,y);y+=ls.length*LH(sz)+7;};
+  const sub=t=>{doc.setFont('S','normal');doc.setFontSize(11);doc.setTextColor(...RED);const ls=doc.splitTextToSize(t,CW);doc.text(ls,M,y);y+=ls.length*LH(11)+5;};
+  const para=(t,size,color)=>{doc.setFont('S','normal');doc.setFontSize(size||10.5);doc.setTextColor(...(color||INK));const ls=doc.splitTextToSize(t,CW);const lh=LH(size||10.5);if(y+ls.length*lh>H-26){newPage();}doc.text(ls,M,y);y+=ls.length*lh+5;};
+  const paras=(arr,size)=>arr.forEach(t=>para(t,size));
+  const callout=t=>{doc.setFont('S','normal');doc.setFontSize(10);const ls=doc.splitTextToSize(t,CW-16);const hh=ls.length*LH(10)+12;if(y+hh>H-26)newPage();doc.setFillColor(...PEACH);doc.roundedRect(M,y-4,CW,hh,3,3,'F');doc.setTextColor(...DARK);doc.text(ls,M+8,y+4);y+=hh+5;};
+  const rule=()=>{doc.setDrawColor(...LINE);doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=6;};
+
+  // ОБЛОЖКА
+  doc.setFillColor(...RED);doc.rect(0,0,W,H,'F');doc.setFillColor(110,18,38);doc.rect(0,H*0.64,W,H*0.36,'F');
+  doc.addImage(IMGS.logoW,'PNG',M-2,M,40,42.5);
+  doc.setFont('S','bold');doc.setFontSize(8.5);doc.setTextColor(...PEACH);doc.text('ПЕРСОНАЛЬНАЯ ДИАГНОСТИКА ПО МЕТОДУ iARPT',M,92,{charSpace:0.8});
+  doc.setFont('F','bold');doc.setFontSize(32);doc.setTextColor(255,255,255);doc.text(doc.splitTextToSize('Карта вашего Телохранителя',CW-10),M,108);
+  doc.setFont('F','normal');doc.setFontSize(20);doc.setTextColor(...PEACH);doc.text(name+', '+age+' '+yearsWord(age),M,150);
+  doc.setFont('S','normal');doc.setFontSize(10);doc.setTextColor(255,240,232);doc.text(new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}),M,159);
+  doc.setFont('S','normal');doc.setFontSize(10);doc.setTextColor(255,240,232);doc.text(doc.splitTextToSize('Анна Чернигова — клинический психолог, автор метода репарационной психологии iARPT, 20 000+ часов практики.',CW-40),M,H*0.64+20);
+  doc.setFontSize(8);doc.setTextColor(255,215,200);doc.text(doc.splitTextToSize(C.disclaimer,CW-10),M,H-34);
+  page=1;
+
+  // 1. СВОДКА
+  newPage();eyebrow('Страница 1');h(C.summaryLead);y+=2;
+  const Gt=C.G[s.Gl].title;
+  const rows=[['Главная точка',s.S],['Индекс разрыва «знаю / делаю»',s.G+' из 100 — '+Gt],['Как он вас останавливает',s.T2?s.T+' + '+s.T2:s.T+(s.Tconf!=='выражен'?' ('+s.Tconf+')':'')],['Где он живёт в теле',s.B],['Что он вам за это платит',s.V],['Когда он был записан',s.F+' фаза'],['Ваш темп',s.R]];
+  rows.forEach((r,i)=>{if(i%2===0){doc.setFillColor(245,236,232);doc.rect(M,y-5.5,CW,12,'F');}doc.setFont('S','normal');doc.setFontSize(10);doc.setTextColor(...MUTED);doc.text(r[0],M+4,y+2);doc.setFont('S','bold');doc.setTextColor(...DARK);doc.text(r[1],W-M-4,y+2,{align:'right'});y+=12;});
+  y+=12;para(C.intro,11);
+
+  // 2. ИНДЕКС
+  newPage();eyebrow('Страница 2 · Индекс разрыва «знаю / делаю»');h('Почему вы всё знаете — и ничего не меняется',20);
+  doc.setFont('F','bold');doc.setFontSize(40);doc.setTextColor(...RED);doc.text(String(s.G),M,y+12);const gw=doc.getTextWidth(String(s.G));doc.setFont('S','normal');doc.setFontSize(11);doc.setTextColor(...MUTED);doc.text('из 100 · '+Gt,M+gw+4,y+12);y+=24;
+  doc.setFillColor(...LINE);doc.roundedRect(M,y,CW,3,1.5,1.5,'F');doc.setFillColor(...RED);doc.roundedRect(M,y,CW*s.G/100,3,1.5,1.5,'F');y+=16;
+  paras(C.G[s.Gl].text);
+
+  // 3. ТИП
+  newPage();eyebrow('Страница 3 · Тип саботажа');h('Как он вас останавливает',20);
+  if(s.T2){para(C.T.mixedIntro.replace('{a}',s.T).replace('{b}',s.T2),10.5,MUTED);}
+  [s.T,s.T2].filter(Boolean).forEach((t,i)=>{if(i)y+=4;sub(C.T[t].title+' — '+C.T[t].sub);paras(C.T[t].text);});
+  y+=2;callout(C.T.scene[s.T][s.S]);
+  if(s.B==='Нет реакции'&&s.T!=='Анализ')para('Тело при этом молчит — значит, ваш телохранитель работает не через зажим, а через мысль. Обратите внимание на страницу 4.',10,MUTED);
+
+  // 4. ТЕЛО
+  newPage();eyebrow('Страница 4 · Соматическая подпись');h('Где он живёт в теле',20);
+  sub(C.B[s.B].title+' — '+C.B[s.B].sub);paras(C.B[s.B].text);
+  if(s.conflict){y+=2;callout(C.B.conflict.replace('{seg}',C.B.segWords[s.S]).replace('{seg2}',C.B.segWords2[s.S2]));}
+
+  // 5. ВЫГОДА
+  newPage();eyebrow('Страница 5 · Скрытая выгода');h('Что он вам за это платит',20);
+  if(s.Vstrong)callout(C.V.strong);
+  sub(C.V[s.V].title+' — '+C.V[s.V].sub);paras(C.V[s.V].text);
+
+  // 6. ФАЗА
+  newPage();eyebrow('Страница 6 · Фаза записи кода');h('Когда он был записан',20);
+  sub(C.F[s.F].title+' · '+C.F[s.F].sub);paras(C.F[s.F].text);y+=2;callout(C.F[s.F].seg[s.S]);
+  para(C.F.outro,11,RED);
+
+  // 7. ТЕМП + ДАЛЬШЕ
+  newPage();eyebrow('Страница 7 · Темп');h('Как с вами можно работать',20);
+  sub(C.R[s.R].title);paras(C.R[s.R].text);y+=6;rule();
+  eyebrow(C.finalLead);
+  para('Ваш телохранитель останавливает вас через «'+(s.T2?s.T+' + '+s.T2:s.T)+'», живёт в зоне «'+s.B+'», платит вам «'+s.V+'» и был записан в '+s.F.toLowerCase()+' фазе.',11,DARK);
+  if(st.goal.trim())callout('Вы написали, что через 6 месяцев хотите: «'+st.goal.trim()+'». Теперь вы знаете, кто стоит между вами и этим.');
+  paras(C.finalText);
+  y+=4;doc.setFont('F','bold');doc.setFontSize(13);doc.setTextColor(...RED);doc.text('Урок 1 · «Ловушка интеллекта» · 7 минут',M,y);y+=12;
+  doc.setFont('S','normal');doc.setFontSize(10);doc.setTextColor(...MUTED);doc.text(C.signature.split('\n'),M,y);
+  return doc;
+}
+let busy=false;
+$('#b-pdf').addEventListener('click',async()=>{
+  if(busy)return;busy=true;const S=$('#pdf-status'),B=$('#b-pdf');
+  try{
+    if(!window.jspdf){S.textContent='Не удалось загрузить генератор PDF. Проверьте соединение и попробуйте ещё раз.';busy=false;return;}
+    B.disabled=true;S.textContent='Собираю PDF…';
+    const doc=buildPdf();const blob=doc.output('blob');const fname='Карта_Телохранителя_'+st.name.trim().replace(/[^\p{L}\p{N}_-]/gu,'_')+'.pdf';
+    const dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null;
+    if(dl){
+      try{await dl.save({filename:fname,data:blob});S.textContent='Карта сохранена. 8 страниц — читайте не торопясь.';}
+      catch(e){S.textContent=e&&e.code==='declined'?'Сохранение отменено. Нажмите ещё раз, когда будете готовы.':'Не получилось сохранить: '+(e&&e.message||e);}
+    }else{
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
+      S.textContent='Карта сохранена. 8 страниц — читайте не торопясь.';
+    }
+  }catch(e){S.textContent='Ошибка при сборке PDF: '+(e&&e.message||e);}
+  B.disabled=false;busy=false;
+});
+})();
+</script>
