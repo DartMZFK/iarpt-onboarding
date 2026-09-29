@@ -38,7 +38,7 @@
 Поле «HTML-код» в Тильде на такой объём не рассчитано, поэтому:
 
 1. Положите `index.html` на хостинг. Проще всего оставить на GitHub Pages:
-   `https://aleksei1999.github.io/iarpt-onboarding/index.html`
+   `https://dartmzfk.github.io/iarpt-onboarding/index.html`
 2. Добавьте на страницу блок **T123 «HTML-код»** и вставьте содержимое `tilda-embed.html`.
 3. Если файл лежит по другому адресу — поправьте `src` у `<iframe>`. Параметр `?embed=1` обязателен.
 
