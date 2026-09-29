@@ -1,0 +1,111 @@
+<!--
+  Квиз по кнопке из зеро-блока. Стартовый экран вы рисуете сами в Тильде.
+
+  НАСТРОЙКА
+  1. Кнопке в зеро-блоке поставьте ссылку  #onbquiz
+     (или задайте ей класс onbquiz — работает и так, и так; кнопок может быть сколько угодно).
+  2. Добавьте на ту же страницу один блок T123 «HTML-код» и вставьте этот код целиком.
+     Место блока на странице значения не имеет — окно открывается поверх всего.
+  3. Проверьте адрес в ONB_SRC ниже. Параметр ?start=welcome обязателен:
+     он говорит приложению пропустить его собственный лендинг и начать с анкеты.
+
+  Файл приложения не грузится, пока кнопку не нажали.
+-->
+<style>
+#onbq{position:fixed;inset:0;z-index:100000;display:none;background:rgba(0,0,0,.62);
+  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);opacity:0;transition:opacity .2s ease}
+#onbq.onbq-open{display:block}
+#onbq.onbq-in{opacity:1}
+#onbq .onbq-panel{position:absolute;inset:0;background:#fff;overflow:hidden}
+#onbq .onbq-panel iframe{display:block;width:100%;height:100%;border:0}
+#onbq .onbq-x{position:absolute;top:14px;right:14px;z-index:2;width:44px;height:44px;border:0;border-radius:50%;
+  background:#fff;color:#BC2C2C;font:400 26px/1 Arial,sans-serif;cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;padding:0}
+#onbq .onbq-x:hover{background:#BC2C2C;color:#fff}
+#onbq .onbq-x:focus-visible{outline:2px solid #BC2C2C;outline-offset:3px}
+@media(min-width:760px){
+  #onbq .onbq-panel{inset:auto;position:relative;margin:4vh auto;width:min(720px,92vw);height:92vh;
+    border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+  #onbq .onbq-x{top:-6px;right:-6px;transform:translate(50%,-50%)}
+}
+@media (prefers-reduced-motion:reduce){#onbq{transition:none}}
+</style>
+
+<div id="onbq" role="dialog" aria-modal="true" aria-label="Диагностика iARPT" hidden>
+  <div class="onbq-panel">
+    <button type="button" class="onbq-x" aria-label="Закрыть">&times;</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // адрес приложения; ?start=welcome — начать сразу с анкеты, минуя встроенный лендинг
+  var ONB_SRC = 'https://aleksei1999.github.io/iarpt-onboarding/index.html?start=welcome';
+  var HASH    = '#onbquiz';
+
+  var box   = document.getElementById('onbq');
+  var panel = box.querySelector('.onbq-panel');
+  var frame = null, opener = null, lockedTop = 0;
+
+  function open(){
+    if (box.classList.contains('onbq-open')) return;
+    opener = document.activeElement;
+    if (!frame){                       // грузим приложение только при первом открытии
+      frame = document.createElement('iframe');
+      frame.src = ONB_SRC;
+      frame.title = 'Диагностика iARPT';
+      frame.setAttribute('allow', 'clipboard-write');
+      panel.appendChild(frame);
+    }
+    // iOS Safari игнорирует overflow:hidden на body — фиксируем страницу позицией
+    lockedTop = window.pageYOffset;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.cssText += ';position:fixed;width:100%;overflow:hidden;top:' + (-lockedTop) + 'px';
+    box.hidden = false;
+    box.classList.add('onbq-open');
+    requestAnimationFrame(function(){ box.classList.add('onbq-in'); });
+    (frame.contentWindow ? frame : box.querySelector('.onbq-x')).focus();
+  }
+
+  function close(){
+    if (!box.classList.contains('onbq-open')) return;
+    box.classList.remove('onbq-in');
+    setTimeout(function(){
+      box.classList.remove('onbq-open');
+      box.hidden = true;
+      document.documentElement.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      document.body.style.top = '';
+      window.scrollTo(0, lockedTop);
+      if (opener && opener.focus) opener.focus();
+    }, 200);
+    // убираем якорь, иначе кнопка не сработает второй раз
+    if (location.hash === HASH && history.replaceState)
+      history.replaceState(null, '', location.pathname + location.search);
+  }
+
+  // кнопка Тильды: ссылка #onbquiz или класс onbquiz
+  document.addEventListener('click', function(e){
+    var t = e.target.closest('a[href$="' + HASH + '"], .onbquiz, [data-onbquiz]');
+    if (!t) return;
+    e.preventDefault();
+    open();
+  });
+  // запасной путь — если Тильда обработала ссылку сама и просто сменила якорь
+  window.addEventListener('hashchange', function(){ if (location.hash === HASH) open(); });
+  if (location.hash === HASH) open();
+
+  box.querySelector('.onbq-x').addEventListener('click', close);
+  box.addEventListener('click', function(e){ if (e.target === box) close(); });   // клик по фону
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
+
+  // приложение просит закрыть (стрелка «назад» с первого экрана анкеты)
+  window.addEventListener('message', function(e){
+    if (!frame || e.source !== frame.contentWindow) return;
+    var d = e.data;
+    if (d && d.ns === 'iarpt-onb' && d.type === 'close') close();
+  });
+})();
+</script>

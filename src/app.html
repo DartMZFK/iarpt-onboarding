@@ -1,205 +1,333 @@
-<title>Карта вашего Телохранителя</title>
+<title>Карта вашего Телохранителя — iARPT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<style>
-:root{
-  --bg:#2A0708; --g1:#C0342F; --g2:#A32229; --g3:#6E1226; --g4:#3D0A2C;
-  --ink:#FFF6F2; --ink-70:rgba(255,246,242,.72); --ink-88:rgba(255,246,242,.88);
-  --peach:#FFC9A3; --white:#FFFFFF; --red:#A32229;
-  --line:rgba(255,246,242,.34); --line-soft:rgba(255,246,242,.22); --fill:rgba(255,246,242,.10);
-  --sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif; --serif:'Playfair Display',Georgia,serif;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
-[hidden]{display:none!important}
-html,body{background:var(--bg);color:var(--ink);font-family:var(--sans)}
-body{min-height:100vh;display:flex;justify-content:center;padding-inline:0}
-#app{width:100%;max-width:460px;min-height:100vh;background:linear-gradient(170deg,var(--g1) 0%,var(--g2) 42%,var(--g3) 74%,var(--g4) 100%);position:relative;overflow:hidden}
-#app::before{content:"";position:absolute;top:-140px;right:-120px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(255,168,120,.28) 0%,rgba(255,168,120,0) 70%);pointer-events:none}
-#app::after{content:"";position:absolute;bottom:-160px;left:-140px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(122,32,140,.35) 0%,rgba(122,32,140,0) 70%);pointer-events:none}
-.screen{position:relative;z-index:1;display:none;flex-direction:column;min-height:100vh;padding:24px 24px 32px;animation:rise .35s ease both}
-.screen.on{display:flex}
-@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@keyframes shine{0%{background-position:180% 50%}100%{background-position:-80% 50%}}
-@keyframes pulse{0%,100%{opacity:.25;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
-@keyframes breathe{0%,100%{transform:scale(.92);opacity:.5}50%{transform:scale(1.08);opacity:1}}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.logo{height:32px;width:auto;display:block;opacity:.96}
-.pill{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,246,242,.8);border:1px solid rgba(255,246,242,.4);border-radius:999px;padding:7px 14px;white-space:nowrap}
-.pill.solid{color:#3D0A0C;background:var(--peach);border-color:var(--peach)}
-.eyebrow{font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--peach)}
-.eyebrow.quiet{font-size:11px;letter-spacing:.16em;color:var(--ink-70)}
-h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.1;text-transform:uppercase;color:var(--white);text-wrap:balance}
-h2{font-family:var(--serif);font-weight:600;font-size:27px;line-height:1.18;color:var(--white);text-wrap:balance}
-p{font-size:16px;line-height:1.5;color:var(--ink-88);text-wrap:pretty}
-.stack{display:flex;flex-direction:column;gap:14px}
-.btn{width:100%;min-height:60px;border:none;border-radius:999px;background:linear-gradient(105deg,#fff 0%,#fff 34%,#FFEBDA 44%,#FFD7B8 50%,#FFEBDA 56%,#fff 68%,#fff 100%);background-size:220% 100%;animation:shine 3.4s linear infinite;color:var(--red);font-family:var(--sans);font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 10px 30px rgba(40,5,10,.35);transition:transform .15s ease;display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none}
-.btn:hover{transform:translateY(-1px)}.btn:active{transform:translateY(1px)}
-.btn:focus-visible,.opt:focus-visible,.ghost:focus-visible,.back:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #fff;outline-offset:3px}
-.btn[disabled]{opacity:.55;cursor:default;animation:none;transform:none}
-.ghost{width:100%;min-height:56px;border:1px solid rgba(255,246,242,.55);border-radius:999px;background:transparent;color:var(--white);font-family:var(--sans);font-size:16px;font-weight:700;cursor:pointer;transition:background .15s ease;display:flex;align-items:center;justify-content:center;text-decoration:none}
-.ghost:hover{background:rgba(255,246,242,.16)}
-.link{border:none;background:transparent;color:rgba(255,246,242,.7);font-family:var(--sans);font-size:13px;font-weight:600;text-decoration:underline;cursor:pointer;margin:14px auto 0}
-.link:hover{color:#fff}
-.hint{text-align:center;font-size:12px;line-height:1.45;color:var(--ink-70)}
-.card{border-radius:20px;border:1px solid var(--line-soft);background:rgba(255,246,242,.08);padding:14px 18px 14px 14px;display:flex;align-items:center;gap:16px}
-.card img{width:86px;height:86px;flex:none;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(40,5,10,.45))}
-.card b{font-family:var(--serif);font-weight:500;font-size:19px;line-height:1.18;color:#fff;display:block}
-.card span{font-size:13px;line-height:1.45;color:rgba(255,246,242,.8)}
-.list{display:grid;gap:10px}
-.li{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.5;color:rgba(255,246,242,.9)}
-.li::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--peach);margin-top:8px;flex:none}
-.box{border-radius:20px;border:1px solid rgba(255,246,242,.26);background:rgba(255,246,242,.10);padding:18px 20px}
-.box p{margin-top:8px;font-size:15px;color:#fff}
-.box small{display:block;margin-top:12px;font-size:13px;line-height:1.5;color:rgba(255,246,242,.78)}
-.back{width:38px;height:38px;flex:none;border-radius:50%;border:1px solid rgba(255,246,242,.45);background:transparent;color:var(--ink);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.back:hover{background:rgba(255,246,242,.14)}
-label{display:flex;flex-direction:column;gap:9px}
-label span{font-size:15px;font-weight:600;color:#fff}
-input,textarea{width:100%;min-height:56px;border-radius:16px;border:1px solid rgba(255,246,242,.36);background:var(--fill);color:#fff;font-size:16px;padding:0 18px;outline:none;font-family:var(--sans)}
-input:focus,textarea:focus{border-color:#fff;background:rgba(255,246,242,.16)}
-input::placeholder,textarea::placeholder{color:rgba(255,246,242,.5)}
-textarea{min-height:130px;padding:16px 18px;line-height:1.5;resize:none}
-.err{font-size:13px;color:var(--peach);min-height:18px}
-.bar{flex:1;height:4px;border-radius:999px;background:rgba(255,246,242,.22);overflow:hidden}
-.bar i{display:block;height:100%;border-radius:999px;background:#fff;transition:width .35s cubic-bezier(.4,0,.2,1)}
-.counter{font-size:12px;font-weight:700;color:rgba(255,246,242,.8);min-width:62px;text-align:right;font-variant-numeric:tabular-nums}
-.note{font-size:14px;line-height:1.5;color:rgba(255,246,242,.84);border-left:2px solid rgba(255,201,163,.75);padding-left:12px}
-.q{font-family:var(--serif);font-weight:600;font-size:25px;line-height:1.22;color:#fff}
-.multi{font-size:13px;font-weight:600;color:rgba(255,246,242,.74)}
-.opts{display:flex;flex-direction:column;gap:9px;padding-bottom:18px}
-.opt{width:100%;text-align:left;border:1px solid var(--line);border-radius:18px;background:var(--fill);color:var(--ink);padding:16px 18px;font-family:var(--sans);font-size:15px;line-height:1.45;font-weight:500;cursor:pointer;transition:background .15s,border-color .15s,transform .12s}
-.opt:hover{border-color:#fff}.opt:active{transform:scale(.99)}
-.opt.on{background:#fff;color:var(--red);border-color:#fff}
-.dots{display:flex;gap:9px}.dots i{width:11px;height:11px;border-radius:50%;background:#fff;animation:pulse 1.1s ease-in-out infinite}
-.dots i:nth-child(2){background:var(--peach);animation-delay:.18s}.dots i:nth-child(3){background:#E8A3C8;animation-delay:.36s}
-.center{align-items:center;justify-content:center;text-align:center;gap:22px;padding:40px 32px}
-.orb{width:74px;height:74px;border-radius:50%;background:rgba(255,246,242,.18);border:1px solid rgba(255,246,242,.4);animation:breathe 3.4s ease-in-out infinite}
-.result{border-radius:26px;background:rgba(40,5,20,.42);border:1px solid var(--line-soft);padding:22px;display:flex;flex-direction:column;gap:14px}
-.result h2{font-size:26px}
-.kv{display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-size:14px;line-height:1.45}
-.kv dt{color:var(--ink-70)}.kv dd{color:#fff;font-weight:700;text-align:right}
-.divider{height:1px;background:rgba(255,246,242,.2)}
-.sp{flex:1;min-height:22px}
-.grow{flex:1}
-.mt8{margin-top:8px}.mt12{margin-top:12px}.mt18{margin-top:18px}.mt22{margin-top:22px}.mt26{margin-top:26px}.mt28{margin-top:28px}.mt40{margin-top:40px}
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<style id="onb-page">
+/* снимается в сборке для Тильды: там страницу оформляет сама Тильда */
+html,body{margin:0;padding:0;background:#fff}
 </style>
 
-<div id="app">
+<style>
+#iarpt-onb{
+  --red:#BC2C2C; --red-d:#9E2424; --red-soft:#F7E8E8;
+  --ink:#000; --ink2:#323232; --ink3:#5C5C5C; --ink4:#828282;
+  --paper:#fff; --paper2:#F1F1F1; --line:#E1E1E1;
+  --sans:'Inter Tight',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --serif:'Cormorant SC','Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --r:30px; --pad:clamp(16px,4vw,32px);
+  width:100%;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;
+  -webkit-font-smoothing:antialiased;text-size-adjust:100%;-webkit-text-size-adjust:100%;
+}
+#iarpt-onb *,#iarpt-onb *::before,#iarpt-onb *::after{box-sizing:border-box;margin:0;padding:0}
+#iarpt-onb [hidden]{display:none!important}
+#iarpt-onb img{max-width:100%}
+
+/* ---------- каркас экранов ---------- */
+#iarpt-onb .screen{display:none;min-height:100svh;padding:clamp(18px,3vw,28px) var(--pad) clamp(28px,4vw,44px);animation:onb-rise .35s ease both}
+#iarpt-onb .screen.on{display:flex;justify-content:center}
+#iarpt-onb .screen.page{min-height:0;padding:0}
+/* внутри iframe высоту задаёт родитель по контенту — 100svh здесь дал бы «резину» */
+#iarpt-onb.embed .screen{min-height:0}
+#iarpt-onb.embed .screen.center{padding-top:clamp(48px,8vw,90px);padding-bottom:clamp(48px,8vw,90px)}
+#iarpt-onb.embed .sp,#iarpt-onb.embed .grow{flex:none;min-height:0}
+#iarpt-onb .screen.page.on{display:block}
+#iarpt-onb .wrap{width:100%;max-width:580px;display:flex;flex-direction:column;flex:1}
+#iarpt-onb .wrap.wide{max-width:1120px;display:block;flex:none;margin:0 auto}
+#iarpt-onb .screen.center{align-items:center}
+#iarpt-onb .screen.center .wrap{justify-content:center;align-items:center;text-align:center;gap:clamp(18px,3vw,26px);max-width:620px}
+@keyframes onb-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes onb-pulse{0%,100%{opacity:.25;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
+@keyframes onb-breathe{0%,100%{transform:scale(.92);opacity:.5}50%{transform:scale(1.08);opacity:1}}
+@media (prefers-reduced-motion:reduce){#iarpt-onb *{animation:none!important;transition:none!important}}
+
+/* ---------- типографика ---------- */
+#iarpt-onb h1{font-family:var(--serif);font-weight:700;text-transform:uppercase;font-size:clamp(30px,5.2vw,64px);line-height:1.02;color:#fff;text-wrap:balance}
+#iarpt-onb h2{font-family:var(--serif);font-weight:600;text-transform:uppercase;font-size:clamp(25px,3.2vw,42px);line-height:1.06;color:var(--ink);text-wrap:balance}
+#iarpt-onb .q{font-weight:600;font-size:clamp(21px,2.4vw,30px);line-height:1.22;color:var(--ink);text-wrap:balance}
+#iarpt-onb p{font-size:clamp(15px,1.4vw,18px);line-height:1.55;color:var(--ink2);text-wrap:pretty}
+#iarpt-onb .lead{font-size:clamp(16px,1.6vw,20px);line-height:1.5}
+#iarpt-onb .eyebrow{font-size:clamp(11px,1vw,13px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--red)}
+#iarpt-onb .eyebrow.quiet{color:var(--ink4);letter-spacing:.14em}
+#iarpt-onb .hint{font-size:clamp(12px,1.05vw,14px);line-height:1.5;color:var(--ink4)}
+#iarpt-onb .stack{display:flex;flex-direction:column;gap:clamp(12px,1.4vw,18px)}
+
+/* на красном фоне */
+#iarpt-onb .onred{background:var(--red);color:#fff}
+#iarpt-onb .onred h1,#iarpt-onb .onred h2,#iarpt-onb .onred .q{color:#fff}
+#iarpt-onb .onred p{color:rgba(255,255,255,.9)}
+#iarpt-onb .onred .eyebrow{color:rgba(255,255,255,.78)}
+#iarpt-onb .onred .hint{color:rgba(255,255,255,.72)}
+
+/* ---------- кнопки ---------- */
+#iarpt-onb .btn{width:100%;min-height:60px;padding:0 30px;border:none;border-radius:var(--r);background:var(--red);color:#fff;font-family:var(--sans);font-size:clamp(15px,1.3vw,18px);font-weight:700;line-height:1.2;cursor:pointer;transition:background .15s ease,transform .12s ease;display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;text-align:center}
+#iarpt-onb .btn:hover{background:var(--red-d)}
+#iarpt-onb .btn:active{transform:translateY(1px)}
+#iarpt-onb .btn[disabled]{opacity:.5;cursor:default;transform:none}
+#iarpt-onb .onred .btn{background:#fff;color:var(--red)}
+#iarpt-onb .onred .btn:hover{background:var(--paper2)}
+#iarpt-onb .btn.inline{max-width:380px}
+#iarpt-onb .ghost{width:100%;min-height:56px;padding:0 28px;border:1.5px solid var(--red);border-radius:var(--r);background:transparent;color:var(--red);font-family:var(--sans);font-size:clamp(15px,1.2vw,17px);font-weight:700;cursor:pointer;transition:background .15s,color .15s;display:flex;align-items:center;justify-content:center;text-decoration:none}
+#iarpt-onb .ghost:hover{background:var(--red);color:#fff}
+#iarpt-onb .onred .ghost{border-color:rgba(255,255,255,.7);color:#fff}
+#iarpt-onb .onred .ghost:hover{background:#fff;color:var(--red)}
+#iarpt-onb .link{border:none;background:transparent;color:var(--ink4);font-family:var(--sans);font-size:14px;font-weight:600;text-decoration:underline;cursor:pointer;margin:14px auto 0}
+#iarpt-onb .link:hover{color:var(--red)}
+#iarpt-onb .btn:focus-visible,#iarpt-onb .ghost:focus-visible,#iarpt-onb .opt:focus-visible,#iarpt-onb .back:focus-visible,#iarpt-onb input:focus-visible,#iarpt-onb textarea:focus-visible,#iarpt-onb .link:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+#iarpt-onb .onred .btn:focus-visible,#iarpt-onb .onred .ghost:focus-visible,#iarpt-onb .onred .back:focus-visible{outline-color:#fff}
+
+/* ---------- шапка ---------- */
+#iarpt-onb .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#iarpt-onb .logo{height:clamp(30px,3vw,44px);width:auto;display:block}
+#iarpt-onb .pill{font-size:clamp(10px,.9vw,12px);font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:999px;padding:8px 16px;white-space:nowrap}
+#iarpt-onb .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--red);border-radius:20px;padding:14px clamp(16px,2vw,22px)}
+
+/* ---------- лендинг ---------- */
+#iarpt-onb .hero{background:var(--red);color:#fff;padding:clamp(18px,2.6vw,30px) var(--pad) clamp(44px,5.5vw,84px)}
+#iarpt-onb .hero-grid{display:grid;gap:clamp(26px,3.5vw,56px);margin-top:clamp(28px,4vw,60px);align-items:start}
+@media(min-width:900px){#iarpt-onb .hero-grid{grid-template-columns:1.12fr .88fr;align-items:center}}
+#iarpt-onb .hero-txt{display:flex;flex-direction:column;gap:clamp(14px,1.6vw,22px)}
+#iarpt-onb .hero-cta{display:flex;flex-direction:column;gap:10px;margin-top:clamp(6px,1vw,12px);max-width:420px}
+
+#iarpt-onb .card{border-radius:22px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);padding:clamp(16px,2vw,26px);display:flex;align-items:center;gap:clamp(14px,2vw,24px)}
+#iarpt-onb .card img{width:clamp(78px,9vw,130px);height:auto;flex:none;object-fit:contain;filter:drop-shadow(0 12px 22px rgba(0,0,0,.28))}
+#iarpt-onb .card b{font-family:var(--serif);font-weight:600;text-transform:uppercase;font-size:clamp(17px,1.7vw,24px);line-height:1.1;color:#fff;display:block;margin-bottom:6px}
+#iarpt-onb .card span{font-size:clamp(13px,1.1vw,15px);line-height:1.45;color:rgba(255,255,255,.85);display:block}
+
+#iarpt-onb .band{padding:clamp(40px,5vw,84px) var(--pad)}
+#iarpt-onb .band.alt{background:var(--paper2)}
+#iarpt-onb .band-head{display:flex;flex-direction:column;gap:12px;margin-bottom:clamp(22px,3vw,40px)}
+
+#iarpt-onb .list{display:grid;gap:clamp(10px,1.2vw,16px)}
+@media(min-width:760px){#iarpt-onb .band .list{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1040px){#iarpt-onb .band .list{grid-template-columns:repeat(3,1fr)}}
+#iarpt-onb .li{display:flex;gap:12px;align-items:flex-start;font-size:clamp(14px,1.2vw,17px);line-height:1.5;color:var(--ink2)}
+#iarpt-onb .band .li{background:var(--paper2);border-radius:18px;padding:clamp(16px,1.6vw,22px)}
+#iarpt-onb .band.alt .li{background:#fff}
+#iarpt-onb .li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--red);margin-top:9px;flex:none}
+
+#iarpt-onb .box{border-radius:22px;border:1px solid var(--line);background:#fff;padding:clamp(20px,2.4vw,34px)}
+#iarpt-onb .band.alt .box{border-color:transparent}
+#iarpt-onb .box p{margin-top:10px}
+#iarpt-onb .box small{display:block;margin-top:16px;font-size:clamp(13px,1.05vw,15px);line-height:1.55;color:var(--ink3);border-left:2px solid var(--red);padding-left:14px}
+@media(min-width:860px){#iarpt-onb .box.split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,3vw,44px);align-items:center}#iarpt-onb .box.split small{margin-top:0;border-left-width:3px}}
+
+#iarpt-onb .closer{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+#iarpt-onb .closer h2{max-width:16ch}
+#iarpt-onb .closer .btn,#iarpt-onb .closer .ghost{max-width:400px}
+
+/* ---------- формы ---------- */
+#iarpt-onb label{display:flex;flex-direction:column;gap:9px}
+#iarpt-onb label span{font-size:15px;font-weight:600;color:var(--ink)}
+#iarpt-onb input,#iarpt-onb textarea{width:100%;min-height:58px;border-radius:16px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:16px;padding:0 18px;outline:none;font-family:var(--sans)}
+#iarpt-onb input:focus,#iarpt-onb textarea:focus{border-color:var(--red)}
+#iarpt-onb input::placeholder,#iarpt-onb textarea::placeholder{color:var(--ink4)}
+#iarpt-onb textarea{min-height:140px;padding:16px 18px;line-height:1.5;resize:vertical}
+#iarpt-onb .err{font-size:13px;color:var(--red);min-height:18px;font-weight:600}
+
+/* ---------- вопросы ---------- */
+#iarpt-onb .back{width:42px;height:42px;flex:none;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,color .15s}
+#iarpt-onb .back:hover{border-color:var(--red);color:var(--red)}
+#iarpt-onb .bar{flex:1;height:4px;border-radius:999px;background:var(--paper2);overflow:hidden}
+#iarpt-onb .bar i{display:block;height:100%;border-radius:999px;background:var(--red);transition:width .35s cubic-bezier(.4,0,.2,1)}
+#iarpt-onb .counter{font-size:12px;font-weight:700;color:var(--ink4);min-width:62px;text-align:right;font-variant-numeric:tabular-nums}
+#iarpt-onb .note{font-size:clamp(13px,1.1vw,15px);line-height:1.5;color:var(--ink3);border-left:2px solid var(--red);padding-left:14px}
+#iarpt-onb .multi{font-size:13px;font-weight:600;color:var(--ink4)}
+#iarpt-onb .opts{display:flex;flex-direction:column;gap:10px;padding-bottom:18px}
+#iarpt-onb .opt{width:100%;text-align:left;border:1px solid var(--line);border-radius:18px;background:#fff;color:var(--ink2);padding:clamp(14px,1.4vw,18px) clamp(16px,1.6vw,22px);font-family:var(--sans);font-size:clamp(14px,1.2vw,16px);line-height:1.45;font-weight:500;cursor:pointer;transition:border-color .15s,background .15s,color .15s,transform .12s}
+#iarpt-onb .opt:hover{border-color:var(--red)}
+#iarpt-onb .opt:active{transform:scale(.995)}
+#iarpt-onb .opt.on{background:var(--red);color:#fff;border-color:var(--red)}
+
+/* ---------- сборка / результат ---------- */
+#iarpt-onb .dots{display:flex;gap:10px}
+#iarpt-onb .dots i{width:12px;height:12px;border-radius:50%;background:#fff;animation:onb-pulse 1.1s ease-in-out infinite}
+#iarpt-onb .dots i:nth-child(2){animation-delay:.18s;opacity:.8}
+#iarpt-onb .dots i:nth-child(3){animation-delay:.36s;opacity:.6}
+#iarpt-onb .orb{width:78px;height:78px;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.5);animation:onb-breathe 3.4s ease-in-out infinite}
+#iarpt-onb .load-line{font-family:var(--serif);font-weight:600;text-transform:uppercase;font-size:clamp(22px,3vw,38px);line-height:1.08;color:#fff}
+#iarpt-onb .result{border-radius:24px;border:1px solid var(--line);background:var(--paper2);padding:clamp(20px,2.4vw,32px);display:flex;flex-direction:column;gap:16px}
+#iarpt-onb .result h2{font-size:clamp(23px,2.6vw,34px)}
+#iarpt-onb .kv{display:grid;grid-template-columns:1fr auto;gap:8px 16px;font-size:clamp(13px,1.1vw,15px);line-height:1.45}
+#iarpt-onb .kv dt{color:var(--ink3)}
+#iarpt-onb .kv dd{color:var(--ink);font-weight:700;text-align:right}
+#iarpt-onb .divider{height:1px;background:var(--line)}
+
+/* ---------- утилиты ---------- */
+#iarpt-onb .sp{flex:1;min-height:22px}
+#iarpt-onb .grow{flex:1}
+#iarpt-onb .mt8{margin-top:8px}
+#iarpt-onb .mt12{margin-top:12px}
+#iarpt-onb .mt18{margin-top:clamp(14px,1.6vw,20px)}
+#iarpt-onb .mt22{margin-top:clamp(18px,2vw,26px)}
+#iarpt-onb .mt26{margin-top:clamp(20px,2.4vw,32px)}
+#iarpt-onb .mt28{margin-top:clamp(22px,2.6vw,34px)}
+#iarpt-onb .mt40{margin-top:clamp(28px,3.4vw,48px)}
+</style>
+
+<div id="iarpt-onb">
 
 <!-- ЛЕНДИНГ -->
-<section class="screen on" id="s-landing">
-  <div class="top"><img class="logo" src="__LOGO__" alt="iARPT"><div class="pill">21 вопрос · 4 минуты</div></div>
-  <div class="stack mt28">
-    <div class="eyebrow">Диагностика по методу iARPT</div>
-    <h1>Кто внутри вас принимает решения, когда вы подходите к важному?</h1>
-    <p>Персональная карта: как именно ваше подсознание вас останавливает, где это живёт в теле и когда было записано.</p>
+<section class="screen page on" id="s-landing">
+
+  <div class="hero onred">
+    <div class="wrap wide">
+      <div class="top"><img class="logo" src="__LOGO__" alt="iARPT"><div class="pill">21 вопрос · 4 минуты</div></div>
+      <div class="hero-grid">
+        <div class="hero-txt">
+          <div class="eyebrow">Диагностика по методу iARPT</div>
+          <h1>Кто внутри вас принимает решения, когда вы подходите к важному?</h1>
+          <p class="lead">Персональная карта: как именно ваше подсознание вас останавливает, где это живёт в теле и когда было записано.</p>
+          <div class="hero-cta">
+            <button class="btn" data-go="welcome">Пройти диагностику</button>
+            <div class="hint">Бесплатно · 4 минуты · без регистрации</div>
+          </div>
+        </div>
+        <div class="card">
+          <img src="__CARD__" alt="">
+          <div><b>Именная карта, 8 страниц</b><span>Собирается под ваши ответы. PDF — сразу после последнего вопроса.</span></div>
+        </div>
+      </div>
+    </div>
   </div>
-  <button class="btn mt22" data-go="welcome">Пройти диагностику</button>
-  <div class="hint mt12">Бесплатно · 4 минуты</div>
-  <div class="card mt22"><img src="__CARD__" alt=""><div><b>Именная карта, 8 страниц</b><span>Собирается под ваши ответы. PDF — сразу после последнего вопроса</span></div></div>
-  <div class="list mt26">
-    <div class="eyebrow quiet">Что вы узнаете</div>
-    <div class="li">Свой тип саботажа из четырёх</div>
-    <div class="li">Соматическую подпись — где тело нажимает на тормоз</div>
-    <div class="li">Скрытую выгоду, которую даёт вам ваша проблема</div>
-    <div class="li">В каком возрасте был записан ваш код (0–7 лет)</div>
-    <div class="li">Какой темп изменений для вас безопасен, а какой даст откат</div>
+
+  <div class="band">
+    <div class="wrap wide">
+      <div class="band-head">
+        <div class="eyebrow">Что вы узнаете</div>
+        <h2>Пять ответов о себе</h2>
+      </div>
+      <div class="list">
+        <div class="li">Свой тип саботажа из четырёх</div>
+        <div class="li">Соматическую подпись — где тело нажимает на тормоз</div>
+        <div class="li">Скрытую выгоду, которую даёт вам ваша проблема</div>
+        <div class="li">В каком возрасте был записан ваш код (0–7 лет)</div>
+        <div class="li">Какой темп изменений для вас безопасен, а какой даст откат</div>
+      </div>
+    </div>
   </div>
-  <div class="box mt22">
-    <div class="eyebrow quiet">Кому это</div>
-    <p>Тем, кто уже много понимает про себя — и именно поэтому ничего не может изменить.</p>
-    <small>Автор: Анна Чернигова — клинический психолог, кандидат наук, автор метода iARPT, 20 000+ часов практики.</small>
+
+  <div class="band alt">
+    <div class="wrap wide">
+      <div class="box split">
+        <div>
+          <div class="eyebrow quiet">Кому это</div>
+          <p>Тем, кто уже много понимает про себя — и именно поэтому ничего не может изменить.</p>
+        </div>
+        <small>Автор: Анна Чернигова — клинический психолог, кандидат наук, автор метода iARPT, 20 000+ часов практики.</small>
+      </div>
+    </div>
   </div>
-  <div class="sp"></div>
-  <button class="ghost" data-go="welcome">Пройти диагностику</button>
-  <div class="hint mt12">Результаты не передаются третьим лицам. Это карта паттернов, а не медицинское заключение.</div>
+
+  <div class="band">
+    <div class="wrap wide">
+      <div class="closer">
+        <h2>Карта собирается за четыре минуты</h2>
+        <button class="btn inline" data-go="welcome">Пройти диагностику</button>
+        <div class="hint">Результаты не передаются третьим лицам. Это карта паттернов, а не медицинское заключение.</div>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 <!-- ЗНАКОМСТВО -->
 <section class="screen" id="s-welcome">
-  <button class="back" data-go="landing" aria-label="Назад">←</button>
-  <div class="stack mt40"><div class="eyebrow">Знакомство</div><h2>Карта будет именной</h2></div>
-  <div class="stack mt26" style="gap:18px">
-    <label><span>Как к вам обращаться?</span><input id="f-name" type="text" maxlength="30" placeholder="Так будет подписана ваша карта" autocomplete="given-name"></label>
-    <label><span>Сколько вам лет?</span><input id="f-age" type="number" inputmode="numeric" min="1" max="99" placeholder="Например, 38"></label>
-    <div class="err" id="f-err"></div>
+  <div class="wrap">
+    <button class="back" data-go="landing" aria-label="Назад">←</button>
+    <div class="stack mt40"><div class="eyebrow">Знакомство</div><h2>Карта будет именной</h2></div>
+    <div class="stack mt26" style="gap:18px">
+      <label><span>Как к вам обращаться?</span><input id="f-name" type="text" maxlength="30" placeholder="Так будет подписана ваша карта" autocomplete="given-name"></label>
+      <label><span>Сколько вам лет?</span><input id="f-age" type="number" inputmode="numeric" min="1" max="99" placeholder="Например, 38"></label>
+      <div class="err" id="f-err"></div>
+    </div>
+    <button class="btn" id="b-start">Начать</button>
+    <div class="hint mt12" id="welcome-hint">21 вопрос, 6 шагов. Никто, кроме вас, не увидит ответы.</div>
+    <div class="grow"></div>
   </div>
-  <button class="btn" id="b-start">Начать</button>
-  <div class="hint mt12" id="welcome-hint">21 вопрос, 6 шагов. Никто, кроме вас, не увидит ответы.</div>
-  <div class="grow"></div>
 </section>
 
 <!-- ДО 18 -->
 <section class="screen center" id="s-underage">
-  <h2>Диагностика рассчитана на взрослых</h2>
-  <p>Спасибо за интерес. Мы не собираем дальше никаких данных.</p>
-  <button class="ghost mt8" style="max-width:240px" data-go="landing">Вернуться</button>
+  <div class="wrap">
+    <h2>Диагностика рассчитана на взрослых</h2>
+    <p>Спасибо за интерес. Мы не собираем дальше никаких данных.</p>
+    <button class="ghost mt8" style="max-width:260px" data-go="landing">Вернуться</button>
+  </div>
 </section>
 
 <!-- ПАУЗА ПЕРЕД ТЕЛОМ -->
-<section class="screen center" id="s-pause">
-  <div class="orb"></div>
-  <h2>Сейчас будет короткое упражнение</h2>
-  <p>10 секунд. Не пропускайте — это самая точная часть диагностики.</p>
-  <button class="btn" style="max-width:300px" id="b-pause">Я готов(а)</button>
+<section class="screen center onred" id="s-pause">
+  <div class="wrap">
+    <div class="orb"></div>
+    <h2>Сейчас будет короткое упражнение</h2>
+    <p>10 секунд. Не пропускайте — это самая точная часть диагностики.</p>
+    <button class="btn" style="max-width:320px" id="b-pause">Я готов(а)</button>
+  </div>
 </section>
 
 <!-- ВОПРОС -->
-<section class="screen" id="s-q" style="padding-top:22px">
-  <div class="top" style="gap:14px"><button class="back" id="b-back" aria-label="Назад">←</button><div class="bar"><i id="bar"></i></div><div class="counter" id="counter"></div></div>
-  <div class="stack mt28" style="gap:12px">
-    <div class="eyebrow" id="q-step"></div>
-    <p class="note" id="q-note" hidden></p>
-    <div class="q" id="q-title"></div>
-    <div class="multi" id="q-multi" hidden>Можно выбрать несколько</div>
+<section class="screen" id="s-q">
+  <div class="wrap">
+    <div class="top" style="gap:14px;flex-wrap:nowrap"><button class="back" id="b-back" aria-label="Назад">←</button><div class="bar"><i id="bar"></i></div><div class="counter" id="counter"></div></div>
+    <div class="stack mt28" style="gap:12px">
+      <div class="eyebrow" id="q-step"></div>
+      <p class="note" id="q-note" hidden></p>
+      <div class="q" id="q-title"></div>
+      <div class="multi" id="q-multi" hidden>Можно выбрать несколько</div>
+    </div>
+    <div class="opts mt18" id="q-opts"></div>
+    <button class="btn" id="b-next" hidden>Дальше</button>
+    <div class="grow"></div>
   </div>
-  <div class="opts mt18" id="q-opts"></div>
-  <button class="btn" id="b-next" hidden>Дальше</button>
-  <div class="grow"></div>
 </section>
 
 <!-- ЦЕЛЬ -->
-<section class="screen" id="s-goal" style="padding-top:22px">
-  <div class="top" style="gap:14px"><button class="back" id="b-back2" aria-label="Назад">←</button><div class="bar"><i style="width:96%"></i></div><div class="counter">Почти</div></div>
-  <div class="stack mt28" style="gap:12px"><div class="eyebrow">Чтобы карта была точнее</div><div class="q">Одной фразой: что вы хотите, чтобы изменилось через 6 месяцев?</div></div>
-  <textarea id="f-goal" class="mt18" maxlength="200" placeholder="Необязательно, но эта фраза попадёт в вашу карту"></textarea>
-  <button class="btn mt22" id="b-finish">Собрать карту</button>
-  <button class="link" id="b-skip">Пропустить</button>
-  <div class="grow"></div>
+<section class="screen" id="s-goal">
+  <div class="wrap">
+    <div class="top" style="gap:14px;flex-wrap:nowrap"><button class="back" id="b-back2" aria-label="Назад">←</button><div class="bar"><i style="width:96%"></i></div><div class="counter">Почти</div></div>
+    <div class="stack mt28" style="gap:12px"><div class="eyebrow">Чтобы карта была точнее</div><div class="q">Одной фразой: что вы хотите, чтобы изменилось через 6 месяцев?</div></div>
+    <textarea id="f-goal" class="mt18" maxlength="200" placeholder="Необязательно, но эта фраза попадёт в вашу карту"></textarea>
+    <button class="btn mt22" id="b-finish">Собрать карту</button>
+    <button class="link" id="b-skip">Пропустить</button>
+    <div class="grow"></div>
+  </div>
 </section>
 
 <!-- СБОРКА -->
-<section class="screen center" id="s-loading">
-  <div class="dots"><i></i><i></i><i></i></div>
-  <div style="font-family:var(--serif);font-size:25px;line-height:1.22;color:#fff" id="load-line">Считываю ваши ответы…</div>
-  <div style="font-size:14px;color:var(--ink-70)">Не закрывайте страницу</div>
+<section class="screen center onred" id="s-loading">
+  <div class="wrap">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <div class="load-line" id="load-line">Считываю ваши ответы…</div>
+    <div class="hint">Не закрывайте страницу</div>
+  </div>
 </section>
 
 <!-- ГОТОВО -->
 <section class="screen" id="s-done">
-  <div class="top"><img class="logo" src="__LOGO__" alt="iARPT"><div class="pill solid">Карта собрана</div></div>
-  <div class="result mt26">
-    <h2 id="done-title">Ваша карта собрана</h2>
-    <p style="font-size:15px">Она именная — 8 страниц. Внизу — краткая версия, полная — в PDF.</p>
-    <div class="divider"></div>
-    <dl class="kv" id="kv"></dl>
+  <div class="wrap">
+    <div class="topbar onred"><img class="logo" src="__LOGO__" alt="iARPT"><div class="pill">Карта собрана</div></div>
+    <div class="result mt26">
+      <h2 id="done-title">Ваша карта собрана</h2>
+      <p>Она именная — 8 страниц. Внизу — краткая версия, полная — в PDF.</p>
+      <div class="divider"></div>
+      <dl class="kv" id="kv"></dl>
+    </div>
+    <button class="btn mt18" id="b-pdf">Скачать мою карту (PDF)</button>
+    <div class="hint mt12" id="pdf-status"></div>
+    <div class="list mt26">
+      <div class="eyebrow quiet">Внутри карты</div>
+      <div class="li">Индекс разрыва «знаю / делаю» — почему понимание не превращается в результат</div>
+      <div class="li">Как он вас останавливает — ваш тип саботажа в вашей зоне</div>
+      <div class="li">Где он живёт в теле — соматическая подпись</div>
+      <div class="li">Что он вам за это платит — скрытая выгода</div>
+      <div class="li">Когда он был записан и ваш темп — как с вами можно работать</div>
+    </div>
+    <div class="sp"></div>
+    <div class="hint">Результаты не передаются третьим лицам. Это карта паттернов, а не медицинское заключение.</div>
+    <button class="link" id="b-restart">Пройти заново</button>
   </div>
-  <button class="btn mt18" id="b-pdf">Скачать мою карту (PDF)</button>
-  <div class="hint mt12" id="pdf-status"></div>
-  <div class="list mt26">
-    <div class="eyebrow quiet">Внутри карты</div>
-    <div class="li">Индекс разрыва «знаю / делаю» — почему понимание не превращается в результат</div>
-    <div class="li">Как он вас останавливает — ваш тип саботажа в вашей зоне</div>
-    <div class="li">Где он живёт в теле — соматическая подпись</div>
-    <div class="li">Что он вам за это платит — скрытая выгода</div>
-    <div class="li">Когда он был записан и ваш темп — как с вами можно работать</div>
-  </div>
-  <div class="sp"></div>
-  <div class="hint">Результаты не передаются третьим лицам. Это карта паттернов, а не медицинское заключение.</div>
-  <button class="link" id="b-restart">Пройти заново</button>
 </section>
 
 </div>
@@ -208,7 +336,15 @@ textarea{min-height:130px;padding:16px 18px;line-height:1.5;resize:none}
 <script>__CONTENT__</script>
 <script>
 (function(){
-const $=s=>document.querySelector(s);
+// всё ищем внутри своей обёртки — на Тильде на странице есть чужая разметка
+const ROOT=document.getElementById('iarpt-onb');
+// ?embed=1 — высоту задаёт родитель; ?start=welcome — лендинг сделан снаружи (зеро-блок Тильды)
+const EMBED=/[?&]embed=1/.test(location.search);
+const START=(location.search.match(/[?&]start=([a-z]+)/)||[])[1]||'';
+const FRAMED=window.parent!==window;
+const post=m=>{if(FRAMED){try{parent.postMessage(Object.assign({ns:'iarpt-onb'},m),'*');}catch(e){}}};
+const $=s=>ROOT.querySelector(s);
+const $$=s=>ROOT.querySelectorAll(s);
 const QS=[
  {id:1,step:'Шаг 1 из 6 — Где вы сейчас',title:'Что сейчас сильнее всего держит вашу жизнь на паузе?',opts:[
   {label:'Деньги. Доход стоит на месте, есть потолок. Трудно назвать цену, попросить, взять больше.',S:'Деньги'},
@@ -305,8 +441,16 @@ const QS=[
 const st={screen:'landing',i:0,name:'',age:'',goal:'',answers:{},multi:[]};
 
 // ---------- навигация
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$('#s-'+id).classList.add('on');window.scrollTo({top:0});st.screen=id;}
-document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.go)));
+function show(id){$$('.screen').forEach(s=>s.classList.remove('on'));$('#s-'+id).classList.add('on');scrollTop();st.screen=id;}
+// на обычном хостинге — вверх страницы, внутри Тильды — к началу блока
+function scrollTop(){const y=ROOT.getBoundingClientRect().top+window.pageYOffset;window.scrollTo({top:y>0?y:0});}
+// когда лендинг внешний, «назад на лендинг» = закрыть окно квиза (или вернуться на стартовый экран)
+function home(){if(!START)return show('landing');if(FRAMED)return post({type:'close'});show(START);}
+$$('[data-go]').forEach(b=>b.addEventListener('click',()=>{
+  const t=b.dataset.go;
+  if(t==='landing'&&START)return home();
+  show(t);
+}));
 $('#f-name').addEventListener('input',e=>{st.name=e.target.value;$('#welcome-hint').textContent=st.name.trim()?st.name.trim()+', впереди 21 вопрос — 6 шагов, около 4 минут.':'21 вопрос, 6 шагов. Никто, кроме вас, не увидит ответы.';});
 $('#f-age').addEventListener('input',e=>st.age=e.target.value);
 $('#f-goal').addEventListener('input',e=>st.goal=e.target.value);
@@ -323,7 +467,7 @@ $('#b-back').addEventListener('click',()=>{if(st.i===0)return show('welcome');go
 $('#b-back2').addEventListener('click',()=>goTo(QS.length-1,true));
 $('#b-next').addEventListener('click',()=>{const q=QS[st.i];if(!st.multi.length)return;st.answers[q.id]=st.multi.slice();goTo(st.i+1);});
 $('#b-finish').addEventListener('click',finish);$('#b-skip').addEventListener('click',()=>{st.goal='';finish();});
-$('#b-restart').addEventListener('click',()=>{st.i=0;st.answers={};st.multi=[];st.goal='';$('#f-goal').value='';$('#pdf-status').textContent='';show('landing');});
+$('#b-restart').addEventListener('click',()=>{st.i=0;st.answers={};st.multi=[];st.goal='';$('#f-goal').value='';$('#pdf-status').textContent='';show(START||'landing');});
 
 function segWord(){return {'Деньги':'богатым','Отношения':'любимым','Опора':'уверенным'}[(st.answers[1]||{}).S]||'уверенным';}
 function fill(t){const n=st.name.trim();return t.replace('{name}',n?n+', ':'').replace('{segWord}',segWord());}
@@ -492,5 +636,20 @@ $('#b-pdf').addEventListener('click',async()=>{
   }catch(e){S.textContent='Ошибка при сборке PDF: '+(e&&e.message||e);}
   B.disabled=false;busy=false;
 });
+
+// ---------- внешний стартовый экран: пропускаем свой лендинг
+if(START&&$('#s-'+START)){ROOT.classList.add('nolanding');show(START);}
+
+// ---------- режим встраивания (iframe на Тильде): высота по контенту + скролл у родителя
+if(EMBED){
+  ROOT.classList.add('embed');
+  let last=0;
+  const sendH=()=>{const h=Math.ceil(ROOT.getBoundingClientRect().height);if(h&&h!==last){last=h;post({type:'height',h});}};
+  // ссылку держим: безымянный ResizeObserver движок может собрать сборщиком мусора
+  const ro=new ResizeObserver(sendH);ro.observe(ROOT);window.__onbRO=ro;
+  addEventListener('load',sendH);addEventListener('resize',sendH);sendH();
+  // смена экрана — единственный момент, когда высота меняется скачком; 420 мс перекрывают анимацию .35s
+  scrollTop=()=>{post({type:'scrollTop'});requestAnimationFrame(sendH);setTimeout(sendH,420);};
+}
 })();
 </script>

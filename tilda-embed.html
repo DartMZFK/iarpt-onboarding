@@ -1,0 +1,35 @@
+<!--
+  Блок T123 «HTML-код» на Тильде.
+  1) Загрузите index.html в файлы Тильды (или оставьте на GitHub Pages) и вставьте адрес в ONB_SRC.
+  2) Вставьте весь этот код в блок T123. Больше ничего не нужно.
+  Высота подстраивается под контент сама, внутренней прокрутки нет.
+
+  Если стартовый экран вы рисуете сами в зеро-блоке — допишите в src параметр &start=welcome,
+  тогда встроенный лендинг приложения пропускается и блок сразу показывает анкету.
+  Нужно открывать квиз по кнопке поверх страницы — берите tilda-zero-button.html.
+-->
+<div id="onb-embed" style="width:100%">
+  <iframe id="onb-frame"
+          src="https://aleksei1999.github.io/iarpt-onboarding/index.html?embed=1"
+          title="Диагностика iARPT"
+          loading="lazy"
+          scrolling="no"
+          style="display:block;width:100%;height:900px;border:0;overflow:hidden"></iframe>
+</div>
+<script>
+(function(){
+  var box = document.getElementById('onb-embed');
+  var fr  = document.getElementById('onb-frame');
+  window.addEventListener('message', function(e){
+    // принимаем только от своего фрейма
+    if (e.source !== fr.contentWindow) return;
+    var d = e.data;
+    if (!d || d.ns !== 'iarpt-onb') return;
+    if (d.type === 'height' && d.h > 0) fr.style.height = d.h + 'px';
+    if (d.type === 'scrollTop') {
+      var y = box.getBoundingClientRect().top + window.pageYOffset;
+      window.scrollTo({ top: y > 0 ? y : 0, behavior: 'smooth' });
+    }
+  });
+})();
+</script>
