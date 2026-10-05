@@ -1,0 +1,64 @@
+name: Prepare iARPT quiz
+on:
+  push:
+    branches: [deploy/iarpt-quiz-20261005]
+    paths: ['.github/workflows/prepare-iarpt-quiz.yml', 'quiz-transfer/**']
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Reconstruct and verify the supplied quiz without changing main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: python
+        run: |
+          import os, json, base64, hashlib, lzma, tarfile, io, urllib.request
+          from concurrent.futures import ThreadPoolExecutor
+          repo = os.environ['GITHUB_REPOSITORY']
+          assert repo == 'DartMZFK/iarpt-onboarding'
+          root = 'https://api.github.com/repos/' + repo
+          headers = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'User-Agent': 'iarpt-quiz-publisher'}
+          def api(path, data=None):
+              body = None if data is None else json.dumps(data).encode()
+              req = urllib.request.Request(root + path, data=body, headers=headers)
+              with urllib.request.urlopen(req, timeout=45) as response:
+                  return json.load(response)
+          with urllib.request.urlopen('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', timeout=45) as response:
+              vendor = response.read()
+          assert hashlib.sha256(vendor).hexdigest() == '98ccf17aa10c20bb1301762618fcc9b6ab3a4e7f26b6071d64d0b41154df3875', 'Unexpected pinned vendor bytes'
+          # Preserve the exact inline dependency bytes from the supplied HTML.
+          vendor_text = vendor.decode('utf-8').replace('"$$"', '"$"')
+          assert hashlib.sha256(vendor_text.encode()).hexdigest() == '11eaefdb9065175547d47d9548a099f3b335267dbc4a558ebe5ea0198ffe1dc6'
+          tree = api('/git/trees/' + os.environ['GITHUB_SHA'] + '?recursive=1')
+          assert not tree.get('truncated')
+          parts = sorted((x for x in tree['tree'] if x['path'].startswith('quiz-transfer/part-') and x['type'] == 'blob'), key=lambda x: x['path'])
+          if not parts:
+              print('TRANSFER_PROBE_OK: pinned vendor available; waiting for the complete source bundle')
+              raise SystemExit(0)
+          assert len(parts) == 13, 'Incomplete source bundle'
+          def read_part(entry):
+              item = api('/git/blobs/' + entry['sha'])
+              assert item['encoding'] == 'base64'
+              return base64.b64decode(item['content'])
+          with ThreadPoolExecutor(max_workers=4) as pool:
+              packed = b''.join(pool.map(read_part, parts))
+          with tarfile.open(fileobj=io.BytesIO(lzma.decompress(packed)), mode='r:') as archive:
+              data = {m.name: archive.extractfile(m).read() for m in archive.getmembers() if m.isfile()}
+          expected = {'template.html', 'FONTS-m400', 'FONTS-m500', 'FONTS-m700', 'FONTS-l400', 'FONTS-l600', 'IMGS-logoW', 'IMGS-logoR'}
+          assert set(data) == expected
+          html = data.pop('template.html').decode('utf-8').replace('___IARPT_LIB___', vendor_text)
+          for name, value in data.items():
+              html = html.replace('___IARPT_' + name + '___', base64.b64encode(value).decode('ascii'))
+          output = html.encode('utf-8')
+          assert len(output) == 998214
+          digest = hashlib.sha256(output).hexdigest()
+          assert digest == 'c24415664ffc596ec8de96a2b56e1765a982257331fa3c1a51669ae95a2dfb63', 'Supplied quiz checksum mismatch'
+          blob = api('/git/blobs', {'content': base64.b64encode(output).decode('ascii'), 'encoding': 'base64'})
+          expected_blob = hashlib.sha1(('blob ' + str(len(output)) + '\0').encode() + output).hexdigest()
+          assert blob['sha'] == expected_blob
+          print('QUIZ_BLOB_SHA=' + blob['sha'])
+          print('QUIZ_SHA256=' + digest)
+          print('Original HTML reconstructed byte-for-byte; main has not been modified.')
