@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Контакт получен</title>
+<style>
+html,body{margin:0;padding:0;background:#f7f9fd;color:#102550;font:400 15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+main{display:grid;place-items:center;min-height:180px;padding:24px;text-align:center}
+b{display:block;margin-bottom:6px;font-size:18px}
+p{margin:0;color:#52627b}
+</style>
+</head>
+<body>
+<main><div><b>Спасибо! Контакт получен.</b><p>Возвращаем вас к PDF-карте…</p></div></main>
+<script>
+(function(){
+  var message={ns:'iarpt-gc-gate',type:'submitted'};
+  function send(){try{if(window.parent&&window.parent!==window)window.parent.postMessage(message,'*');}catch(_){}}
+  send();
+  setTimeout(send,120);
+  setTimeout(send,500);
+}());
+</script>
+</body>
+</html>
