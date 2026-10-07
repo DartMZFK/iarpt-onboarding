@@ -1242,7 +1242,7 @@ let A = {}, idx = -1, userName = '';
 let PROFILE = null, TOKEN = '', SERVER = null;
 let transitionTimer = 0, transitionPending = false, generation = 0;
 let activeRequest = null, resultMode = 'local', currentView = 'intro', viewActive = true;
-let leadUnlocked = false, leadInteracted = false, leadFrame = null, leadGateObserver = null;
+let leadUnlocked = false, leadFrame = null, leadGateObserver = null;
 try { leadUnlocked = sessionStorage.getItem('iarpt-gc-lead') === '1'; } catch (_) { /* storage may be unavailable */ }
 
 function notify(type) {
@@ -1385,15 +1385,6 @@ function bindLeadGateFrame() {
   leadFrame = frame;
   frame.dataset.iarptGateBound = '1';
   frame.title = frame.title || 'Форма получения PDF-карты';
-  const markInteraction = () => {
-    if (document.activeElement === frame) leadInteracted = true;
-  };
-  window.addEventListener('blur', markInteraction, true);
-  frame.addEventListener('load', () => {
-    if (leadInteracted && !leadUnlocked) {
-      window.setTimeout(() => unlockLeadGate('widget-submit'), 180);
-    }
-  });
 }
 function watchLeadGateFrame() {
   bindLeadGateFrame();
@@ -1460,7 +1451,8 @@ window.addEventListener('message', event => {
   if (!data || data.ns !== 'iarpt-gc-gate' || data.type !== 'submitted' || leadUnlocked) return;
   const frame = leadFrame || $('#leadGateWidget')?.querySelector('iframe');
   if (!frame || event.source !== frame.contentWindow) return;
-  if (event.origin !== 'null' && event.origin !== window.location.origin) return;
+  const allowedOrigin = event.origin === 'null' || event.origin === window.location.origin || event.origin === 'https://achernigova.online';
+  if (!allowedOrigin) return;
   unlockLeadGate('callback');
 });
 
