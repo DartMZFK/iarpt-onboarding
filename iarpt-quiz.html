@@ -581,8 +581,8 @@ window.IARPT_QUIZ_RUNTIME = (function () {
  <section id="leadGate" class="lead-gate" hidden aria-labelledby="leadGateTitle">
    <div class="lead-gate-head">
      <span class="kicker">Последний шаг</span>
-     <h3 id="leadGateTitle">Заполните данные, чтобы получить карту</h3>
-     <p>Заполните контактные данные в форме ниже, чтобы забрать свою персональную карту в чат-боте Академии.</p>
+     <h3 id="leadGateTitle">Заполните данные</h3>
+     <p>Укажите контактные данные в форме ниже.</p>
    </div>
    <div class="lead-gate-widget" id="leadGateWidget">
      <script id="89eee96275943ccda69e4f1105ff3586a62342ed" src="https://achernigova.online/pl/lite/widget/script?id=1665352"></script>
@@ -1461,7 +1461,7 @@ function renderResult() {
   const p = PROFILE, first = userName.split(/\s+/)[0], botUrl = telegramUrl();
   const nl = t => esc(t.replace(/\n/g, ' '));
   const react = p.react.length > 1 ? nl(p.react[0].tile) + ' · ' + nl(p.react[1].tile).toLowerCase() : nl(p.react[0].tile);
-  const intro = 'Чтобы её забрать, вам нужно заполнить данные в форме ниже и получить карту в чат-боте Академии.';
+  const intro = 'Чтобы забрать её, заполните данные в форме ниже, а затем получите карту в чат-боте Академии.';
   const message = botUrl
     ? 'В Telegram бот пришлёт вашу PDF-карту и откроет три бесплатных видеоурока — смотрите их по порядку. Карта описывает ваши ответы для самонаблюдения и не является диагнозом.'
     : (resultMode === 'unavailable' ? 'Сервис отправки в Telegram сейчас недоступен. После отправки формы ниже откроется скачивание PDF.' : 'После отправки формы ниже откроется скачивание PDF-карты.') + ' Карта описывает ваши ответы для самонаблюдения и не является диагнозом.';
