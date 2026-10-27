@@ -14,3 +14,5 @@ assert.ok(t123.includes('https://card.iarpt.ru/quiz/iarpt-quiz.html'), 'server q
 assert.ok(t123.includes('https://dartmzfk.github.io/iarpt-onboarding/iarpt-quiz.html'), 'GitHub must remain as a fallback');
 assert.ok(!t123.includes('fetch(') && !t123.includes('new Blob('), 'T123 must embed the quiz directly');
 assert.ok(quiz.includes("height:460px"), 'GetCourse form must have a visible initial height');
+assert.ok(quiz.includes('function isTelegramBrowser()'), 'quiz must detect the Telegram WebView');
+assert.ok(quiz.includes('Открыть форму GetCourse'), 'Telegram must have a top-level GetCourse form link');

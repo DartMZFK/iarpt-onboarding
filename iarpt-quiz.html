@@ -517,6 +517,7 @@ textarea:focus,input:focus{border-color:var(--red)}
 .lead-gate-head p{margin:0;color:var(--body);font-size:14px;line-height:1.6}
 .lead-gate-widget{min-height:160px;border-radius:18px;background:#f7f9fd;overflow:hidden}
 .lead-gate-widget iframe{display:block;width:100%!important;max-width:100%;border:0!important}
+.lead-gate-external{display:block;margin:12px 0 0;color:var(--dark);font-size:13px;line-height:1.5;text-decoration:underline}
 .lead-gate-lock{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:#f3f6fc;color:#52627b;font-size:12.5px;line-height:1.55}
 .lead-gate-success{background:#edf5ef;color:#2f6941}
 .lead-gate .actions{margin-bottom:12px}
@@ -1394,21 +1395,45 @@ function bindLeadGateFrame() {
 // у которого нет query, поэтому номер карты передаём прямо в адресе формы.
 const GC_WIDGET_ID = '89eee96275943ccda69e4f1105ff3586a62342ed';
 const GC_FORM_URL = 'https://achernigova.online/pl/lite/widget/widget?id=1665352';
+function isTelegramBrowser() {
+  return /Telegram/i.test(navigator.userAgent || '') || !!window.Telegram?.WebApp;
+}
+function leadFormURL() {
+  return GC_FORM_URL
+    + (SERVER ? '&iarpt_card=' + encodeURIComponent(SERVER.id) : '')
+    + '&ref=' + encodeURIComponent(document.referrer)
+    + '&loc=' + encodeURIComponent(window.location.href);
+}
+function addExternalLeadLink(widget, url, telegram) {
+  const note = document.createElement('p');
+  note.className = 'small';
+  note.textContent = telegram
+    ? 'В браузере Telegram форма GetCourse открывается отдельной страницей.'
+    : 'Если форма не появилась, откройте её отдельной страницей.';
+  const link = document.createElement('a');
+  link.className = 'lead-gate-external';
+  link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+  link.textContent = 'Открыть форму GetCourse ↗';
+  widget.append(note, link);
+}
 function loadLeadWidget() {
   const widget = $('#leadGateWidget');
   if (!widget) return;
   leadGateObserver?.disconnect(); leadGateObserver = null; leadFrame = null;
   widget.innerHTML = '';
+  const url = leadFormURL();
+  if (isTelegramBrowser()) {
+    addExternalLeadLink(widget, url, true);
+    return;
+  }
   const frame = document.createElement('iframe');
   frame.name = '448';
-  frame.src = GC_FORM_URL
-    + (SERVER ? '&iarpt_card=' + encodeURIComponent(SERVER.id) : '')
-    + '&ref=' + encodeURIComponent(document.referrer)
-    + '&loc=' + encodeURIComponent(window.location.href);
+  frame.src = url;
   // ponytail: visible fallback for WebViews that drop the GetCourse resize message.
   frame.style.cssText = 'width:100%;height:460px;border:0;overflow:hidden';
   frame.setAttribute('allowfullscreen', 'allowfullscreen');
   widget.appendChild(frame);
+  addExternalLeadLink(widget, url, false);
   bindLeadGateFrame();
 }
 window.addEventListener('message', event => {
