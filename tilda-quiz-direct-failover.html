@@ -1,6 +1,6 @@
-<script id="iarpt-quiz-config" type="application/json">{"sources":[{"url":"https://card.iarpt.ru/quiz/iarpt-quiz.html","timeoutMs":3000},{"url":"https://dartmzfk.github.io/iarpt-onboarding/iarpt-quiz.html","timeoutMs":15000}]}</script>
+<script id="iarpt-quiz-config" type="application/json">{"sources":[{"url":"https://card.iarpt.ru/quiz/iarpt-quiz.html","parallelAfterMs":2500},{"url":"https://dartmzfk.github.io/iarpt-onboarding/iarpt-quiz.html","parallelAfterMs":2500}],"giveUpMs":20000}</script>
 <style>
-#iarpt-quiz-modal[hidden]{display:none!important}#iarpt-quiz-modal{position:fixed;z-index:2147483646;inset:0;display:grid;place-items:center;padding:24px;background:rgba(5,14,36,.8);box-sizing:border-box;font:400 15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}#iarpt-quiz-modal *{box-sizing:border-box}#iarpt-quiz-modal .iq-window{display:flex;flex-direction:column;width:min(900px,100%);height:min(860px,100%);overflow:hidden;border-radius:24px;background:#f3f6fc;box-shadow:0 32px 110px rgba(3,10,28,.35)}#iarpt-quiz-modal .iq-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px 14px 24px;background:#102550;color:#fff}#iarpt-quiz-modal .iq-title{margin:0;font-size:16px;font-weight:600}#iarpt-quiz-modal .iq-subtitle{margin:3px 0 0;color:#d4dff2;font-size:11px}#iarpt-quiz-modal .iq-close{width:42px;height:42px;border:1px solid rgba(255,255,255,.3);border-radius:12px;background:transparent;color:#fff;font:400 28px/1 Arial;cursor:pointer}#iarpt-quiz-modal .iq-stage{position:relative;flex:1;min-height:0;background:#f3f6fc}#iarpt-quiz-modal .iq-frame{display:block;width:100%;height:100%;border:0;background:#f3f6fc}#iarpt-quiz-modal .iq-status{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:#f3f6fc;color:#102550}#iarpt-quiz-modal .iq-status[hidden]{display:none!important}#iarpt-quiz-modal .iq-spin{width:30px;height:30px;border:3px solid #d3dcee;border-top-color:#102550;border-radius:50%;animation:iarpt-spin .8s linear infinite}#iarpt-quiz-modal .iq-retry{padding:12px 20px;border:0;border-radius:999px;background:#bc2c2c;color:#fff;font:600 14px/1.4 Inter,Arial,sans-serif;cursor:pointer}#iarpt-quiz-modal .iq-external{color:#102550;text-decoration:underline;font-size:14px}@keyframes iarpt-spin{to{transform:rotate(360deg)}}@media(max-width:639px){#iarpt-quiz-modal{padding:0}#iarpt-quiz-modal .iq-window{width:100%;height:100%;border-radius:0}#iarpt-quiz-modal .iq-bar{padding:12px 14px 12px 18px}}
+#iarpt-quiz-modal[hidden]{display:none!important}#iarpt-quiz-modal{position:fixed;z-index:2147483646;inset:0;display:grid;place-items:center;padding:24px;background:rgba(5,14,36,.8);box-sizing:border-box;font:400 15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}#iarpt-quiz-modal *{box-sizing:border-box}#iarpt-quiz-modal .iq-window{display:flex;flex-direction:column;width:min(900px,100%);height:min(860px,100%);overflow:hidden;border-radius:24px;background:#f3f6fc;box-shadow:0 32px 110px rgba(3,10,28,.35)}#iarpt-quiz-modal .iq-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px 14px 24px;background:#102550;color:#fff}#iarpt-quiz-modal .iq-title{margin:0;font-size:16px;font-weight:600}#iarpt-quiz-modal .iq-subtitle{margin:3px 0 0;color:#d4dff2;font-size:11px}#iarpt-quiz-modal .iq-close{width:42px;height:42px;border:1px solid rgba(255,255,255,.3);border-radius:12px;background:transparent;color:#fff;font:400 28px/1 Arial;cursor:pointer}#iarpt-quiz-modal .iq-stage{position:relative;flex:1;min-height:0;background:#f3f6fc}#iarpt-quiz-modal .iq-frame{position:absolute;inset:0;display:block;width:100%;height:100%;border:0;background:#f3f6fc}#iarpt-quiz-modal .iq-frame[data-pending]{visibility:hidden}#iarpt-quiz-modal .iq-status{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:#f3f6fc;color:#102550}#iarpt-quiz-modal .iq-status[hidden]{display:none!important}#iarpt-quiz-modal .iq-spin{width:30px;height:30px;border:3px solid #d3dcee;border-top-color:#102550;border-radius:50%;animation:iarpt-spin .8s linear infinite}#iarpt-quiz-modal .iq-retry{padding:12px 20px;border:0;border-radius:999px;background:#bc2c2c;color:#fff;font:600 14px/1.4 Inter,Arial,sans-serif;cursor:pointer}#iarpt-quiz-modal .iq-external{color:#102550;text-decoration:underline;font-size:14px}@keyframes iarpt-spin{to{transform:rotate(360deg)}}@media(max-width:639px){#iarpt-quiz-modal{padding:0}#iarpt-quiz-modal .iq-window{width:100%;height:100%;border-radius:0}#iarpt-quiz-modal .iq-bar{padding:12px 14px 12px 18px}}
 </style>
 <div id="iarpt-quiz-modal" role="dialog" aria-modal="true" aria-labelledby="iarpt-quiz-title" hidden>
   <div class="iq-window">
@@ -12,6 +12,10 @@
 (() => {
   'use strict';
   if (window.IARPTQuiz) return;
+  // Источники грузятся «гонкой»: основной стартует сразу, если он не ответил готовностью
+  // за parallelAfterMs — параллельно стартует следующий, но основной НЕ обрывается.
+  // Показываем тот, что первым прислал ready. Так медленный сервер без VPN не теряется,
+  // а недоступный через VPN сервер не задерживает тест дольше нескольких секунд.
   const modal = document.getElementById('iarpt-quiz-modal');
   const stage = modal.querySelector('.iq-stage');
   const status = modal.querySelector('.iq-status');
@@ -20,57 +24,85 @@
   const external = modal.querySelector('.iq-external');
   const closeButton = modal.querySelector('.iq-close');
   const triggerSelector = '[data-iarpt-quiz], [data-ih-open], a[href="#iarpt-test"], a[href="#iarpt-quiz"]';
-  let frame, timeoutId, channel = '', index = 0, opener, previousOverflow = '';
+  const ALLOWED = /^https:\/\/(card\.iarpt\.ru|dartmzfk\.github\.io)\//;
+  const DEFAULTS = {sources:[{url:'https://card.iarpt.ru/quiz/iarpt-quiz.html', parallelAfterMs:2500},{url:'https://dartmzfk.github.io/iarpt-onboarding/iarpt-quiz.html', parallelAfterMs:2500}], giveUpMs:20000};
+  let attempts = [], winner = null, timers = [], opener, previousOverflow = '', run = 0;
 
-  function sources() {
+  function config() {
     try {
-      const config = JSON.parse(document.getElementById('iarpt-quiz-config').textContent || '{}');
-      if (Array.isArray(config.sources) && config.sources.length) return config.sources;
+      const c = JSON.parse(document.getElementById('iarpt-quiz-config').textContent || '{}');
+      if (Array.isArray(c.sources) && c.sources.length) return {sources: c.sources.filter(s => ALLOWED.test(s && s.url || '')), giveUpMs: Number(c.giveUpMs) || DEFAULTS.giveUpMs};
     } catch (_) {}
-    return [{url:'https://card.iarpt.ru/quiz/iarpt-quiz.html', timeoutMs:3000},{url:'https://dartmzfk.github.io/iarpt-onboarding/iarpt-quiz.html', timeoutMs:15000}];
+    return DEFAULTS;
   }
-  function clearTimers() { clearTimeout(timeoutId); }
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
   function showStatus(text, isError) {
     status.hidden = false; statusText.textContent = text;
     status.querySelector('.iq-spin').hidden = !!isError;
     retry.hidden = !isError;
   }
-  function createChannel() { return 'iq-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2); }
-  function sourceURL(source) {
-    const url = new URL(source.url);
-    url.hash = new URLSearchParams({'iq-parent': location.origin, 'iq-channel': channel}).toString();
-    return url.href;
+  function channelId() { return 'iq-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2); }
+  function removeFrames(keep) { attempts.forEach(a => { if (a !== keep) a.frame.remove(); }); attempts = keep ? [keep] : []; }
+  function start(i) {
+    const list = config().sources;
+    if (winner || i >= list.length || attempts.some(a => a.index === i)) return;
+    const source = list[i], url = new URL(source.url);
+    const attempt = {index: i, source, origin: url.origin, channel: channelId(), failed: false, frame: document.createElement('iframe')};
+    url.hash = new URLSearchParams({'iq-parent': location.origin, 'iq-channel': attempt.channel}).toString();
+    attempt.frame.className = 'iq-frame';
+    attempt.frame.title = 'Тест iARPT — персональная карта изменений';
+    attempt.frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    attempt.frame.dataset.pending = '1';
+    attempt.frame.src = url.href;
+    attempts.push(attempt);
+    stage.appendChild(attempt.frame);
+    if (!external.href || i === 0) { external.href = source.url; external.hidden = false; }
+    if (i > 0) showStatus('Подключаем резервный источник…', false);
+    const myRun = run;
+    later(() => { if (myRun === run && !winner) start(i + 1); }, Math.max(1500, Number(source.parallelAfterMs) || 2500));
   }
-  function failover() {
-    const list = sources();
-    if (index + 1 >= list.length) { showStatus('Тест не загрузился. Проверьте интернет или откройте его в новой вкладке.', true); return; }
-    index += 1; load();
+  function fail(attempt) {
+    if (winner || attempt.failed) return;
+    attempt.failed = true;
+    const list = config().sources;
+    if (attempt.index + 1 < list.length) start(attempt.index + 1);
+    if (attempts.length && attempts.every(a => a.failed) && attempts.length >= list.length) giveUp();
+  }
+  function giveUp() {
+    if (winner) return;
+    clearTimers(); removeFrames(null);
+    showStatus('Тест не загрузился. Проверьте интернет или откройте его в новой вкладке.', true);
   }
   function load() {
-    clearTimers();
-    const source = sources()[index];
-    if (!source || !/^https:\/\/(card\.iarpt\.ru|dartmzfk\.github\.io)\//.test(source.url || '')) { showStatus('Источник теста настроен неверно.', true); return; }
-    channel = createChannel();
-    frame?.remove();
-    showStatus(index ? 'Пробуем резервный источник…' : 'Открываем тест…', false);
-    external.href = source.url; external.hidden = false;
-    frame = document.createElement('iframe');
-    frame.className = 'iq-frame'; frame.title = 'Тест iARPT — персональная карта изменений';
-    frame.referrerPolicy = 'strict-origin-when-cross-origin';
-    frame.addEventListener('error', failover, {once:true});
-    frame.src = sourceURL(source);
-    stage.appendChild(frame);
-    timeoutId = setTimeout(failover, Math.max(3000, Number(source.timeoutMs) || 3000));
+    run += 1; clearTimers(); winner = null; removeFrames(null);
+    if (!config().sources.length) { showStatus('Источник теста настроен неверно.', true); return; }
+    external.removeAttribute('href'); external.hidden = true;
+    showStatus('Открываем тест…', false);
+    start(0);
+    const myRun = run;
+    later(() => { if (myRun === run) giveUp(); }, config().giveUpMs);
   }
   window.addEventListener('message', event => {
-    const source = sources()[index], d = event.data;
-    if (!frame || !source || event.source !== frame.contentWindow || event.origin !== new URL(source.url).origin || !d || d.ns !== 'iarpt-quiz-handoff' || d.channel !== channel) return;
-    if (d.type === 'ready') { clearTimeout(timeoutId); status.hidden = true; }
-    if (d.type === 'error') failover();
+    const d = event.data;
+    if (!d || d.ns !== 'iarpt-quiz-handoff') return;
+    const attempt = attempts.find(a => event.source === a.frame.contentWindow);
+    if (!attempt || event.origin !== attempt.origin || d.channel !== attempt.channel) return;
+    if (d.type === 'ready' && !winner) {
+      winner = attempt; clearTimers(); removeFrames(attempt);
+      delete attempt.frame.dataset.pending; status.hidden = true;
+      external.href = attempt.source.url;
+      return;
+    }
+    // Ошибка скрипта после старта теста не должна перезагружать тест и стирать ответы.
+    if (d.type === 'error' && !winner) { fail(attempt); return; }
+    if (attempt !== winner) return;
+    if (d.type === 'close') close();
+    if (d.type === 'focus-close') closeButton.focus({preventScroll:true});
   });
-  function open(button) { if (!modal.hidden) return; opener = button || document.activeElement; previousOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; modal.hidden = false; index = 0; load(); closeButton.focus({preventScroll:true}); }
-  function close() { clearTimers(); frame?.remove(); frame = null; modal.hidden = true; document.body.style.overflow = previousOverflow; opener?.focus?.({preventScroll:true}); }
-  retry.addEventListener('click', () => { index = 0; load(); });
+  function open(button) { if (!modal.hidden) return; opener = button || document.activeElement; previousOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; modal.hidden = false; load(); closeButton.focus({preventScroll:true}); }
+  function close() { run += 1; clearTimers(); winner = null; removeFrames(null); modal.hidden = true; document.body.style.overflow = previousOverflow; opener?.focus?.({preventScroll:true}); }
+  retry.addEventListener('click', load);
   closeButton.addEventListener('click', close);
   modal.addEventListener('click', event => { if (event.target === modal) close(); });
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !modal.hidden) { event.preventDefault(); close(); } });
