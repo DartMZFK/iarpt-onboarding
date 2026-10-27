@@ -1302,6 +1302,7 @@ function beginQs() {
   idx = 0; renderQ(true); resetScroll();
 }
 function renderQ(moveFocus = false) {
+  if (idx === 0) prewarmLeadForm();
   currentView = 'question';
   $('#backBtn').style.visibility = 'visible';
   const q = QS[idx], sec = SECTIONS[q.sec - 1];
@@ -1346,7 +1347,7 @@ function pick(c) {
 function saveText() { if (currentView !== 'question' || !$('#ta')) return; A[QS[idx].id] = $('#ta').value.trim(); next(); }
 function skip() { if (currentView !== 'question' || transitionPending) return; delete A[QS[idx].id]; advance(); }
 function next() { if (currentView !== 'question' || transitionPending) return; rememberDraft(); advance(); }
-function advance() { if (idx < QS.length - 1) { idx++; if (idx >= QS.length - 2) warmLeadForm(); if (idx === QS.length - 1) prewarmLeadForm(); renderQ(true); resetScroll(); } else finish(); }
+function advance() { if (idx < QS.length - 1) { idx++; if (idx >= QS.length - 2) warmLeadForm(); if (idx === QS.length - 1 && !leadPrewarmDone) { leadPrewarmTries = 0; prewarmLeadForm(); } renderQ(true); resetScroll(); } else finish(); }
 async function finish() {
   if (currentView === 'loading') return;
   currentView = 'loading';
@@ -1544,18 +1545,31 @@ function showLeadLoader() {
   setTimeout(() => { const t = loader.querySelector('span'); if (t && loader.isConnected) t.textContent = 'Загружаем форму… Это может занять несколько секунд.'; }, 4000);
 }
 function hideLeadLoader() { $('#leadGateWidget .lead-gate-loader')?.remove(); }
-// Прогрев: пока человек отвечает на последний вопрос, в фоне грузим страницу формы ГК, чтобы её
-// соединение, HTML и скрипты к финалу уже были в кеше. Настоящую форму (с номером карты) создаём позже.
-let leadPrewarm = null;
+// Прогрев: с первого вопроса в фоне открываем страницу формы ГК, чтобы её ~600 КБ скриптов и стилей
+// (ГК их кеширует) к финалу уже лежали в кеше браузера. Через нестабильный VPN попытка может зависнуть —
+// тогда тихо повторяем, пока одна не пройдёт. После успеха фрейм убираем. Настоящую форму
+// (с номером карты) создаём на финальном экране.
+let leadPrewarm = null, leadPrewarmDone = false, leadPrewarmTries = 0;
 function prewarmLeadForm() {
-  if (leadPrewarm || leadFrame || leadUnlocked || isTelegramBrowser()) return;
-  leadPrewarm = document.createElement('iframe');
-  leadPrewarm.setAttribute('aria-hidden', 'true'); leadPrewarm.tabIndex = -1;
-  leadPrewarm.title = 'Подготовка формы';
-  leadPrewarm.style.cssText = 'position:fixed;right:0;bottom:0;width:2px;height:2px;border:0;opacity:0;pointer-events:none';
-  leadPrewarm.src = leadFormURL();
-  document.body.appendChild(leadPrewarm);
+  if (leadPrewarmDone || leadFrame || leadUnlocked || isTelegramBrowser()) return;
+  if (leadPrewarm && leadPrewarm.isConnected) return;
+  if (leadPrewarmTries >= 5) return;
+  leadPrewarmTries++;
+  const frame = document.createElement('iframe');
+  frame.setAttribute('aria-hidden', 'true'); frame.tabIndex = -1;
+  frame.title = 'Подготовка формы';
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:2px;height:2px;border:0;opacity:0;pointer-events:none';
+  frame.src = leadFormURL();
+  document.body.appendChild(frame);
+  leadPrewarm = frame;
+  setTimeout(() => { if (leadPrewarm === frame && !leadPrewarmDone) { dropLeadPrewarm(); prewarmLeadForm(); } }, 8000);
 }
+window.addEventListener('message', event => {
+  if (event.origin !== 'https://achernigova.online' || !leadPrewarm || event.source !== leadPrewarm.contentWindow) return;
+  leadPrewarmDone = true;
+  const frame = leadPrewarm;
+  setTimeout(() => { if (leadPrewarm === frame) dropLeadPrewarm(); }, 1500);
+});
 function dropLeadPrewarm() { leadPrewarm?.remove(); leadPrewarm = null; }
 function loadLeadWidget() {
   const widget = $('#leadGateWidget');

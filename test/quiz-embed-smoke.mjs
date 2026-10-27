@@ -29,5 +29,5 @@ console.log('quiz-embed-smoke: ok');
 assert.ok(quiz.includes('function retryVisibleLeadForm(') && quiz.includes('Отключите VPN'), 'GetCourse unreachable via VPN must show a clear retry notice');
 assert.ok(!quiz.includes('visibility:hidden;') || !/LEAD_SHADOW = '[^']*visibility:hidden/.test(quiz), 'pending GetCourse frames must not be visibility:hidden');
 assert.ok(quiz.includes('leadFrame.replaceWith(fresh)'), 'a silent GetCourse attempt is replaced, not piled up');
-assert.ok(quiz.includes('function prewarmLeadForm(') && quiz.includes('prewarmLeadForm(); renderQ'), 'GetCourse form must be prewarmed on the last question');
+assert.ok(quiz.includes('function prewarmLeadForm(') && quiz.includes('if (idx === 0) prewarmLeadForm();'), 'GetCourse form must be prewarmed on the last question');
 assert.ok(quiz.includes('lead-gate-loader') && quiz.includes('Загружаем форму'), 'form preloader');
