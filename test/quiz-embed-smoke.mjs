@@ -15,4 +15,8 @@ assert.ok(t123.includes('https://dartmzfk.github.io/iarpt-onboarding/iarpt-quiz.
 assert.ok(!t123.includes('fetch(') && !t123.includes('new Blob('), 'T123 must embed the quiz directly');
 assert.ok(quiz.includes("const LEAD_API = 'https://card.iarpt.ru'"), 'quiz must post leads to the trusted server');
 assert.ok(quiz.includes("fetch(LEAD_API + '/api/lead'"), 'quiz must save the native form through the server');
+assert.ok(quiz.includes('Соглашаюсь с <a href="https://achernigova.ru/offer"'), 'quiz must retain the offer consent');
+assert.ok(quiz.includes('Соглашаюсь с <a href="http://achernigova.ru/document"'), 'quiz must retain the privacy-policy consent');
+assert.ok(quiz.includes('Даю согласие на получение <a href="http://mailing.iarpt.online/"'), 'quiz must retain the mailing consent');
+assert.ok(quiz.includes('consents: {'), 'quiz must submit the individual consents');
 assert.ok(!quiz.includes('GC_FORM_URL'), 'quiz must not embed the GetCourse widget');
