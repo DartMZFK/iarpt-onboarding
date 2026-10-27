@@ -1,4 +1,4 @@
-<script id="iarpt-quiz-config" type="application/json">{"sources":[{"url":"https://card.iarpt.ru/quiz/iarpt-quiz.html","timeoutMs":45000},{"url":"https://dartmzfk.github.io/iarpt-onboarding/iarpt-quiz.html","timeoutMs":30000}]}</script>
+<script id="iarpt-quiz-config" type="application/json">{"sources":[{"url":"https://card.iarpt.ru/quiz/iarpt-quiz.html","timeoutMs":9000},{"url":"https://dartmzfk.github.io/iarpt-onboarding/iarpt-quiz.html","timeoutMs":15000}]}</script>
 <style>
 #iarpt-quiz-modal[hidden]{display:none!important}#iarpt-quiz-modal{position:fixed;z-index:2147483646;inset:0;display:grid;place-items:center;padding:24px;background:rgba(5,14,36,.8);box-sizing:border-box;font:400 15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}#iarpt-quiz-modal *{box-sizing:border-box}#iarpt-quiz-modal .iq-window{display:flex;flex-direction:column;width:min(900px,100%);height:min(860px,100%);overflow:hidden;border-radius:24px;background:#f3f6fc;box-shadow:0 32px 110px rgba(3,10,28,.35)}#iarpt-quiz-modal .iq-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px 14px 24px;background:#102550;color:#fff}#iarpt-quiz-modal .iq-title{margin:0;font-size:16px;font-weight:600}#iarpt-quiz-modal .iq-subtitle{margin:3px 0 0;color:#d4dff2;font-size:11px}#iarpt-quiz-modal .iq-close{width:42px;height:42px;border:1px solid rgba(255,255,255,.3);border-radius:12px;background:transparent;color:#fff;font:400 28px/1 Arial;cursor:pointer}#iarpt-quiz-modal .iq-stage{position:relative;flex:1;min-height:0;background:#f3f6fc}#iarpt-quiz-modal .iq-frame{display:block;width:100%;height:100%;border:0;background:#f3f6fc}#iarpt-quiz-modal .iq-status{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:#f3f6fc;color:#102550}#iarpt-quiz-modal .iq-status[hidden]{display:none!important}#iarpt-quiz-modal .iq-spin{width:30px;height:30px;border:3px solid #d3dcee;border-top-color:#102550;border-radius:50%;animation:iarpt-spin .8s linear infinite}#iarpt-quiz-modal .iq-retry{padding:12px 20px;border:0;border-radius:999px;background:#bc2c2c;color:#fff;font:600 14px/1.4 Inter,Arial,sans-serif;cursor:pointer}#iarpt-quiz-modal .iq-external{color:#102550;text-decoration:underline;font-size:14px}@keyframes iarpt-spin{to{transform:rotate(360deg)}}@media(max-width:639px){#iarpt-quiz-modal{padding:0}#iarpt-quiz-modal .iq-window{width:100%;height:100%;border-radius:0}#iarpt-quiz-modal .iq-bar{padding:12px 14px 12px 18px}}
 </style>
@@ -20,25 +20,25 @@
   const external = modal.querySelector('.iq-external');
   const closeButton = modal.querySelector('.iq-close');
   const triggerSelector = '[data-iarpt-quiz], [data-ih-open], a[href="#iarpt-test"], a[href="#iarpt-quiz"]';
-  let frame, timeoutId, revealId, index = 0, opener, previousOverflow = '';
+  let frame, timeoutId, channel = '', index = 0, opener, previousOverflow = '';
 
   function sources() {
     try {
       const config = JSON.parse(document.getElementById('iarpt-quiz-config').textContent || '{}');
       if (Array.isArray(config.sources) && config.sources.length) return config.sources;
     } catch (_) {}
-    return [{url:'https://card.iarpt.ru/quiz/iarpt-quiz.html', timeoutMs:45000},{url:'https://dartmzfk.github.io/iarpt-onboarding/iarpt-quiz.html', timeoutMs:30000}];
+    return [{url:'https://card.iarpt.ru/quiz/iarpt-quiz.html', timeoutMs:9000},{url:'https://dartmzfk.github.io/iarpt-onboarding/iarpt-quiz.html', timeoutMs:15000}];
   }
-  function clearTimers() { clearTimeout(timeoutId); clearTimeout(revealId); }
+  function clearTimers() { clearTimeout(timeoutId); }
   function showStatus(text, isError) {
     status.hidden = false; statusText.textContent = text;
     status.querySelector('.iq-spin').hidden = !!isError;
     retry.hidden = !isError;
   }
-  function showQuizSoon() { revealId = setTimeout(() => { status.hidden = true; }, 900); }
+  function createChannel() { return 'iq-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2); }
   function sourceURL(source) {
     const url = new URL(source.url);
-    url.hash = new URLSearchParams({'iq-parent': location.origin}).toString();
+    url.hash = new URLSearchParams({'iq-parent': location.origin, 'iq-channel': channel}).toString();
     return url.href;
   }
   function failover() {
@@ -50,19 +50,24 @@
     clearTimers();
     const source = sources()[index];
     if (!source || !/^https:\/\/(card\.iarpt\.ru|dartmzfk\.github\.io)\//.test(source.url || '')) { showStatus('Источник теста настроен неверно.', true); return; }
+    channel = createChannel();
     frame?.remove();
     showStatus(index ? 'Пробуем резервный источник…' : 'Открываем тест…', false);
     external.href = source.url; external.hidden = false;
     frame = document.createElement('iframe');
     frame.className = 'iq-frame'; frame.title = 'Тест iARPT — персональная карта изменений';
     frame.referrerPolicy = 'strict-origin-when-cross-origin';
-    frame.addEventListener('load', () => { clearTimeout(timeoutId); status.hidden = true; }, {once:true});
     frame.addEventListener('error', failover, {once:true});
     frame.src = sourceURL(source);
     stage.appendChild(frame);
-    showQuizSoon();
     timeoutId = setTimeout(failover, Math.max(5000, Number(source.timeoutMs) || 45000));
   }
+  window.addEventListener('message', event => {
+    const source = sources()[index], d = event.data;
+    if (!frame || !source || event.source !== frame.contentWindow || event.origin !== new URL(source.url).origin || !d || d.ns !== 'iarpt-quiz-handoff' || d.channel !== channel) return;
+    if (d.type === 'ready') { clearTimeout(timeoutId); status.hidden = true; }
+    if (d.type === 'error') failover();
+  });
   function open(button) { if (!modal.hidden) return; opener = button || document.activeElement; previousOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; modal.hidden = false; index = 0; load(); closeButton.focus({preventScroll:true}); }
   function close() { clearTimers(); frame?.remove(); frame = null; modal.hidden = true; document.body.style.overflow = previousOverflow; opener?.focus?.({preventScroll:true}); }
   retry.addEventListener('click', () => { index = 0; load(); });

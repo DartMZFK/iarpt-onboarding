@@ -563,7 +563,7 @@ button,a,input,textarea{-webkit-tap-highlight-color:transparent}button:focus-vis
 /* Публичная конфигурация теста. Секреты и BOT_TOKEN здесь не размещать.
    При пустом apiUrl ответы никуда не отправляются; результат и PDF строятся в браузере. */
 window.IARPT_QUIZ_RUNTIME = (function () {
-  var config = {apiUrl: 'https://card.iarpt.ru', botUsername: '', allowDownload: true, timeoutMs: 15000};
+  var config = {apiUrl: 'https://card.iarpt.ru', botUsername: '', allowDownload: false, timeoutMs: 15000};
   // В адресе только одноразовый канал и origin родителя; имени и ответов в URL нет.
   try {
     var params = new URLSearchParams(window.location.hash.slice(1));
@@ -594,7 +594,7 @@ window.IARPT_QUIZ_RUNTIME = (function () {
    </div>
    <div class="lead-gate-widget" id="leadGateWidget">
    </div>
-   <p class="lead-gate-lock" id="leadGateLock" role="status" aria-live="polite">PDF пока закрыт — сначала отправьте контакт через форму выше.</p>
+   <p class="lead-gate-lock" id="leadGateLock" role="status" aria-live="polite">PDF-карта будет доступна в Telegram-боте после заполнения формы выше.</p>
    <div class="actions" id="leadGateActions" hidden></div>
    <p class="small" id="delivery-status"></p>
  </section>
@@ -1396,7 +1396,7 @@ function unlockLeadGate() {
   const actions = $('#leadGateActions');
   if (lock) {
     lock.classList.add('lead-gate-success');
-    lock.textContent = 'Контакт получен. PDF-карта открыта — можно скачать файл.';
+    lock.textContent = 'Контакт получен. PDF-карта будет доступна в Telegram-боте.';
   }
   if (actions) actions.hidden = false;
   requestAnimationFrame(() => $('#dl')?.focus({preventScroll:true}));
@@ -1441,7 +1441,7 @@ async function submitNativeLead(event) {
     if (error) { error.hidden = false; error.textContent = leadError(cause.status, cause.body); }
   } finally {
     leadSubmitting = false;
-    if (button) { button.disabled = false; button.textContent = 'Получить PDF-карту'; }
+    if (button) { button.disabled = false; button.textContent = 'Перейти в Telegram за PDF-картой'; }
   }
 }
 function loadLeadWidget() {
@@ -1454,7 +1454,7 @@ function loadLeadWidget() {
     <label class="lead-consent"><input name="privacy" type="checkbox" required><span>Соглашаюсь с <a href="http://achernigova.ru/document" target="_blank" rel="noopener noreferrer">политикой конфиденциальности</a></span></label>
     <label class="lead-consent"><input name="mailing" type="checkbox" required><span>Даю согласие на получение <a href="http://mailing.iarpt.online/" target="_blank" rel="noopener noreferrer">информационных и маркетинговых рассылок</a></span></label>
     <p class="lead-error" id="leadFormError" role="alert" hidden></p>
-    <button class="btn block" id="leadFormSubmit" type="submit">Получить PDF-карту</button>
+    <button class="btn block" id="leadFormSubmit" type="submit">Перейти в Telegram за PDF-картой</button>
   </form>`;
   widget.querySelector('form')?.addEventListener('submit', submitNativeLead);
 }
@@ -1474,14 +1474,14 @@ function showLeadGate(botUrl, message) {
     if (widget) widget.hidden = true;
     if (lock) {
       lock.classList.add('lead-gate-success');
-      lock.textContent = 'Контакт уже получен в этой сессии. PDF-карта открыта.';
+      lock.textContent = 'Контакт уже получен в этой сессии. PDF-карта доступна в Telegram-боте.';
     }
     actions.hidden = false;
   } else {
     if (widget) widget.hidden = false;
     if (lock) {
       lock.classList.remove('lead-gate-success');
-      lock.textContent = 'PDF пока закрыт — сначала отправьте контакт через форму выше.';
+      lock.textContent = 'PDF-карта будет доступна в Telegram-боте после заполнения формы выше.';
     }
     actions.hidden = true;
     loadLeadWidget();
@@ -1492,10 +1492,8 @@ function renderResult() {
   const p = PROFILE, first = userName.split(/\s+/)[0], botUrl = telegramUrl();
   const nl = t => esc(t.replace(/\n/g, ' '));
   const react = p.react.length > 1 ? nl(p.react[0].tile) + ' · ' + nl(p.react[1].tile).toLowerCase() : nl(p.react[0].tile);
-  const intro = 'Чтобы забрать её, заполните данные в форме ниже.';
-  const message = botUrl
-    ? 'В Telegram бот пришлёт вашу PDF-карту и откроет три бесплатных видеоурока — смотрите их по порядку. Карта описывает ваши ответы для самонаблюдения и не является диагнозом.'
-    : (resultMode === 'unavailable' ? 'Сервис отправки в Telegram сейчас недоступен. После отправки формы ниже откроется скачивание PDF.' : 'После отправки формы ниже откроется скачивание PDF-карты.') + ' Карта описывает ваши ответы для самонаблюдения и не является диагнозом.';
+  const intro = 'Заполните форму ниже — ваша PDF-карта будет доступна в Telegram-боте.';
+  const message = 'После заполнения формы откроется Telegram-бот, где будет доступна ваша PDF-карта. Карта описывает ваши ответы для самонаблюдения и не является диагнозом.';
   $('#backBtn').style.visibility = 'hidden';
   $('#qArea').innerHTML = `<div class="rhero"><span class="kicker">Карта собрана</span><h2>Ваша персональная карта готова</h2><p>${intro}</p></div>
     <div class="tiles">
