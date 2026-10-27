@@ -557,7 +557,7 @@ button,a,input,textarea{-webkit-tap-highlight-color:transparent}button:focus-vis
 /* Публичная конфигурация теста. Секреты и BOT_TOKEN здесь не размещать.
    При пустом apiUrl ответы никуда не отправляются; результат и PDF строятся в браузере. */
 window.IARPT_QUIZ_RUNTIME = (function () {
-  var config = {apiUrl: 'https://card.iarpt.ru', botUsername: '', allowDownload: true, timeoutMs: 6000};
+  var config = {apiUrl: 'https://card.iarpt.ru', botUsername: '', allowDownload: true, timeoutMs: 4000};
   // В адресе только одноразовый канал и origin родителя; имени и ответов в URL нет.
   try {
     var params = new URLSearchParams(window.location.hash.slice(1));
@@ -1344,7 +1344,7 @@ function pick(c) {
 function saveText() { if (currentView !== 'question' || !$('#ta')) return; A[QS[idx].id] = $('#ta').value.trim(); next(); }
 function skip() { if (currentView !== 'question' || transitionPending) return; delete A[QS[idx].id]; advance(); }
 function next() { if (currentView !== 'question' || transitionPending) return; rememberDraft(); advance(); }
-function advance() { if (idx < QS.length - 1) { idx++; renderQ(true); resetScroll(); } else finish(); }
+function advance() { if (idx < QS.length - 1) { idx++; if (idx >= QS.length - 2) warmLeadForm(); renderQ(true); resetScroll(); } else finish(); }
 async function finish() {
   if (currentView === 'loading') return;
   currentView = 'loading';
@@ -1352,25 +1352,39 @@ async function finish() {
   $('#qArea').innerHTML = '<div class="prog"><i style="width:100%"></i></div><div class="pmeta"><b>Готово</b><span>Собираю вашу карту…</span></div><p class="big" data-stage-title role="status">Считываю ваши ответы. Не закрывайте страницу.</p>';
   resetScroll(); focusCurrent(); SERVER = null; resultMode = 'local';
   const requestGeneration = ++generation;
-  // Без номера карты форма ГК уйдёт с пустым доп. полем, поэтому сбой сети переспрашиваем один раз.
-  // Через VPN card.iarpt.ru бывает недоступен: ждём не больше ~13 с, затем показываем форму и локальный PDF.
-  for (let attempt = 0; CONFIG.apiUrl && attempt < 2 && !SERVER && requestGeneration === generation; attempt++) {
-    if (attempt) await new Promise(resolve => setTimeout(resolve, 1000));
-    activeRequest = new AbortController();
-    const timeout = setTimeout(() => activeRequest?.abort(), CONFIG.timeoutMs);
+  warmLeadForm();
+  // Через VPN card.iarpt.ru отвечает рывками (часть соединений виснет). Не держим человека
+  // на этом экране: ждём сервер не дольше 2,5 с, остальное дожидаемся в фоне.
+  const api = requestCard(requestGeneration);
+  await Promise.race([api, new Promise(resolve => setTimeout(resolve, 2500))]);
+  if (requestGeneration !== generation) return;
+  renderResult();
+  if (!SERVER && CONFIG.apiUrl) api.then(() => { if (requestGeneration === generation && SERVER && currentView === 'result') cardArrived(); });
+}
+// Номер карты нужен форме ГК (доп. поле) и боту. Зависшее соединение обрываем быстро и сразу повторяем.
+async function requestCard(requestGeneration) {
+  for (let attempt = 0; CONFIG.apiUrl && attempt < 3 && !SERVER && requestGeneration === generation; attempt++) {
+    if (attempt) await new Promise(resolve => setTimeout(resolve, 300));
+    const ctrl = new AbortController(); activeRequest = ctrl;
+    const timeout = setTimeout(() => ctrl.abort(), CONFIG.timeoutMs);
     try {
       const response = await fetch(CONFIG.apiUrl + '/api/result', {
         method: 'POST', headers: {'Content-Type': 'application/json'}, credentials: 'omit',
-        referrerPolicy: 'no-referrer', body: JSON.stringify({name: userName, answers: A}), signal: activeRequest.signal
+        referrerPolicy: 'no-referrer', body: JSON.stringify({name: userName, answers: A}), signal: ctrl.signal
       });
       if (!response.ok) throw new Error('HTTP ' + response.status);
       const data = await response.json();
       if (!data || typeof data.id !== 'string' || !/^[A-Za-z0-9_-]{7,64}$/.test(data.id)) throw new Error('Invalid response');
       if (requestGeneration === generation) { SERVER = data; resultMode = 'server'; }
-    } catch (_) { resultMode = 'unavailable'; }
-    finally { clearTimeout(timeout); activeRequest = null; }
+    } catch (_) { if (!SERVER) resultMode = 'unavailable'; }
+    finally { clearTimeout(timeout); if (activeRequest === ctrl) activeRequest = null; }
   }
-  if (requestGeneration === generation) renderResult();
+}
+// Карта пришла после показа формы: обновляем кнопки и, если человек ещё не трогал форму,
+// пересобираем её с номером карты.
+function cardArrived() {
+  showLeadGate(telegramUrl(), leadMessage(telegramUrl()), true);
+  if (!leadUnlocked && !leadTouched) loadLeadWidget();
 }
 function telegramUrl() {
   if (!SERVER) return '';
@@ -1422,10 +1436,28 @@ function addExternalLeadLink(widget, url, telegram) {
 // Живая форма ГК всегда шлёт родителю служебные postMessage — это и есть признак загрузки.
 // Если за 12 с от формы ничего не пришло, показываем подсказку над формой (саму форму не убираем:
 // сеть через VPN нестабильна, и форма может догрузиться позже).
-let leadWatch = 0, leadFormSeen = false;
+let leadWatch = 0, leadFormSeen = false, leadRetried = false, leadTouched = false;
 function watchLeadForm() {
   const id = ++leadWatch; leadFormSeen = false;
-  setTimeout(() => { if (id === leadWatch && !leadFormSeen && !leadUnlocked) showLeadOffline(); }, 12000);
+  // Часть соединений через VPN виснет: один раз тихо пересоздаём фрейм, если форма молчит 5 с.
+  if (!leadRetried) setTimeout(() => {
+    if (id === leadWatch && !leadFormSeen && !leadUnlocked) { leadRetried = true; loadLeadWidget(); }
+  }, 5000);
+  setTimeout(() => { if (id === leadWatch && !leadFormSeen && !leadUnlocked) showLeadOffline(); }, leadRetried ? 7000 : 12000);
+}
+// Фокус ушёл во фрейм формы — человек начал её заполнять, пересобирать форму уже нельзя.
+window.addEventListener('blur', () => setTimeout(() => {
+  const frame = $('#leadGateWidget iframe');
+  if (frame && document.activeElement === frame) leadTouched = true;
+}, 0));
+// Заранее открываем соединение с ГК, пока собирается карта.
+let leadWarm = false;
+function warmLeadForm() {
+  if (leadWarm) return; leadWarm = true;
+  for (const rel of ['dns-prefetch', 'preconnect']) {
+    const link = document.createElement('link'); link.rel = rel; link.href = 'https://achernigova.online';
+    document.head.appendChild(link);
+  }
 }
 function showLeadOffline() {
   const widget = $('#leadGateWidget');
@@ -1500,7 +1532,7 @@ function unlockLeadGate(source) {
   }
   requestAnimationFrame(() => $('#dl')?.focus({preventScroll:true}));
 }
-function showLeadGate(botUrl, message) {
+function showLeadGate(botUrl, message, keepWidget) {
   const gate = $('#leadGate');
   const widget = $('#leadGateWidget');
   const lock = $('#leadGateLock');
@@ -1526,7 +1558,7 @@ function showLeadGate(botUrl, message) {
       lock.textContent = 'PDF пока закрыт — сначала отправьте контакт через форму выше.';
     }
     actions.hidden = true;
-    loadLeadWidget();
+    if (!keepWidget) loadLeadWidget();
   }
 }
 window.addEventListener('message', event => {
@@ -1539,15 +1571,19 @@ window.addEventListener('message', event => {
   unlockLeadGate('callback');
 });
 
+function leadMessage(botUrl) {
+  return botUrl
+    ? 'В Telegram бот пришлёт вашу PDF-карту и откроет три бесплатных видеоурока — смотрите их по порядку. Карта описывает ваши ответы для самонаблюдения и не является диагнозом.'
+    : (resultMode === 'unavailable' ? 'Сервис отправки в Telegram сейчас недоступен. После отправки формы ниже откроется скачивание PDF.' : 'После отправки формы ниже откроется скачивание PDF-карты.') + ' Карта описывает ваши ответы для самонаблюдения и не является диагнозом.';
+}
 function renderResult() {
+  leadTouched = false; leadRetried = false;
   currentView = 'result'; PROFILE = compute(A); TOKEN = token(PROFILE);
   const p = PROFILE, first = userName.split(/\s+/)[0], botUrl = telegramUrl();
   const nl = t => esc(t.replace(/\n/g, ' '));
   const react = p.react.length > 1 ? nl(p.react[0].tile) + ' · ' + nl(p.react[1].tile).toLowerCase() : nl(p.react[0].tile);
   const intro = 'Чтобы забрать её, заполните данные в форме ниже, а затем получите карту в чат-боте Академии.';
-  const message = botUrl
-    ? 'В Telegram бот пришлёт вашу PDF-карту и откроет три бесплатных видеоурока — смотрите их по порядку. Карта описывает ваши ответы для самонаблюдения и не является диагнозом.'
-    : (resultMode === 'unavailable' ? 'Сервис отправки в Telegram сейчас недоступен. После отправки формы ниже откроется скачивание PDF.' : 'После отправки формы ниже откроется скачивание PDF-карты.') + ' Карта описывает ваши ответы для самонаблюдения и не является диагнозом.';
+  const message = leadMessage(botUrl);
   $('#backBtn').style.visibility = 'hidden';
   $('#qArea').innerHTML = `<div class="rhero"><span class="kicker">Карта собрана</span><h2>Ваша персональная карта готова</h2><p>${intro}</p></div>
     <div class="tiles">

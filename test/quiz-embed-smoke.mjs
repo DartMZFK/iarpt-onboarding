@@ -22,7 +22,7 @@ assert.ok(t123.includes('parallelAfterMs'), 'T123 must race sources instead of c
 assert.ok(/d\.type === 'error' && !winner/.test(t123), 'errors after ready must not trigger failover');
 assert.ok(!/timeoutMs":3000/.test(t123), 'no hard 3s cutoff');
 assert.equal((t123.match(/id="iarpt-quiz-modal"/g) || []).length, 1, 'single modal');
-assert.ok(quiz.includes("timeoutMs: 6000") && quiz.includes('attempt < 2'), 'API wait must be bounded (~13s) when card.iarpt.ru is unreachable');
+assert.ok(quiz.includes("timeoutMs: 4000") && quiz.includes('attempt < 3') && quiz.includes('setTimeout(resolve, 2500)'), 'API wait must be bounded (~13s) when card.iarpt.ru is unreachable');
 assert.ok(quiz.includes('achernigova.online/pl/lite/widget/widget?id=1665352'), 'GetCourse widget restored');
 assert.ok(quiz.includes('id="leadGate"') && quiz.includes('function renderResult()'), 'server sync script markers present');
 console.log('quiz-embed-smoke: ok');
