@@ -517,6 +517,8 @@ textarea:focus,input:focus{border-color:var(--red)}
 .lead-gate-head p{margin:0;color:var(--body);font-size:14px;line-height:1.6}
 .lead-gate-widget{position:relative;min-height:160px;border-radius:18px;background:#f7f9fd;overflow:hidden}
 .lead-gate-widget iframe{display:block;width:100%!important;max-width:100%;border:0!important}
+.lead-gate-widget>p.small{margin:12px 16px 0}.lead-gate-widget>.lead-gate-external{margin:6px 16px 0;padding-bottom:16px}
+.lead-frame-box{position:relative;min-height:460px}.lead-gate-loader{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;background:#f7f9fd;color:var(--body);font-size:13.5px;line-height:1.5;text-align:center}.lead-gate-loader i{width:30px;height:30px;border:3px solid #d3dcee;border-top-color:#102550;border-radius:50%;animation:sp .8s linear infinite}
 .lead-gate-offline{padding:22px 20px;text-align:center;color:var(--ink)}.lead-gate-offline b{display:block;margin-bottom:6px;font-size:16px}.lead-gate-offline p{margin:0 0 14px;color:var(--body);font-size:13.5px;line-height:1.55}
 .lead-gate-external{display:block;margin:12px 0 0;color:var(--dark);font-size:13px;line-height:1.5;text-decoration:underline}
 .lead-gate-lock{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:#f3f6fc;color:#52627b;font-size:12.5px;line-height:1.55}
@@ -1344,7 +1346,7 @@ function pick(c) {
 function saveText() { if (currentView !== 'question' || !$('#ta')) return; A[QS[idx].id] = $('#ta').value.trim(); next(); }
 function skip() { if (currentView !== 'question' || transitionPending) return; delete A[QS[idx].id]; advance(); }
 function next() { if (currentView !== 'question' || transitionPending) return; rememberDraft(); advance(); }
-function advance() { if (idx < QS.length - 1) { idx++; if (idx >= QS.length - 2) warmLeadForm(); renderQ(true); resetScroll(); } else finish(); }
+function advance() { if (idx < QS.length - 1) { idx++; if (idx >= QS.length - 2) warmLeadForm(); if (idx === QS.length - 1) prewarmLeadForm(); renderQ(true); resetScroll(); } else finish(); }
 async function finish() {
   if (currentView === 'loading') return;
   currentView = 'loading';
@@ -1452,6 +1454,8 @@ function createLeadFrame(url, visible) {
   let loads = 0;
   frame.addEventListener('load', () => {
     frame.dataset.loaded = '1';
+    // Страница формы загрузилась — убираем прелоадер даже если ГК не прислал сообщение (некоторые WebView их теряют).
+    if (frame === leadFrame) setTimeout(() => { if (frame === leadFrame) hideLeadLoader(); }, 400);
     if (++loads >= 2 && frame === leadFrame && leadFormSeen) unlockLeadGate('frame');
   });
   return frame;
@@ -1468,6 +1472,7 @@ function retryVisibleLeadForm(url) {
     if (tries >= LEAD_MAX_TRIES) return;
     const fresh = createLeadFrame(url, true);
     leadFrame.replaceWith(fresh); leadFrame = fresh;
+    dropLeadPrewarm(); showLeadLoader();
     tries++; extended = false; wait = Math.min(Math.round(wait * 1.5), 15000);
     setTimeout(tick, wait);
   };
@@ -1484,7 +1489,7 @@ function prepareLeadFormWithCard(url) {
     if (tries >= 3) { leadPending?.remove(); leadPending = null; return; }
     leadPending?.remove();
     leadPending = createLeadFrame(url, false);
-    widget.insertBefore(leadPending, leadFrame.nextSibling);
+    leadFrame.after(leadPending);
     tries++;
     setTimeout(attempt, 6000);
   };
@@ -1493,7 +1498,7 @@ function prepareLeadFormWithCard(url) {
 window.addEventListener('message', event => {
   if (event.origin !== 'https://achernigova.online') return;
   if (leadFrame && event.source === leadFrame.contentWindow) {
-    if (!leadFormSeen) { leadFormSeen = true; $('#leadGateWidget .lead-gate-offline')?.remove(); }
+    if (!leadFormSeen) { leadFormSeen = true; hideLeadLoader(); dropLeadPrewarm(); $('#leadGateWidget .lead-gate-offline')?.remove(); }
     return;
   }
   if (leadPending && event.source === leadPending.contentWindow) {
@@ -1528,6 +1533,30 @@ function showLeadOffline() {
   box.querySelector('button').addEventListener('click', loadLeadWidget);
   widget.prepend(box);
 }
+// Прелоадер на месте формы: пока ГК не ответил, вместо пустого белого фрейма видно, что идёт загрузка.
+function showLeadLoader() {
+  const box = leadFrame?.parentNode;
+  if (!box || box.querySelector('.lead-gate-loader')) return;
+  const loader = document.createElement('div');
+  loader.className = 'lead-gate-loader'; loader.setAttribute('role', 'status');
+  loader.innerHTML = '<i aria-hidden="true"></i><span>Загружаем форму…</span>';
+  box.prepend(loader);
+  setTimeout(() => { const t = loader.querySelector('span'); if (t && loader.isConnected) t.textContent = 'Загружаем форму… Это может занять несколько секунд.'; }, 4000);
+}
+function hideLeadLoader() { $('#leadGateWidget .lead-gate-loader')?.remove(); }
+// Прогрев: пока человек отвечает на последний вопрос, в фоне грузим страницу формы ГК, чтобы её
+// соединение, HTML и скрипты к финалу уже были в кеше. Настоящую форму (с номером карты) создаём позже.
+let leadPrewarm = null;
+function prewarmLeadForm() {
+  if (leadPrewarm || leadFrame || leadUnlocked || isTelegramBrowser()) return;
+  leadPrewarm = document.createElement('iframe');
+  leadPrewarm.setAttribute('aria-hidden', 'true'); leadPrewarm.tabIndex = -1;
+  leadPrewarm.title = 'Подготовка формы';
+  leadPrewarm.style.cssText = 'position:fixed;right:0;bottom:0;width:2px;height:2px;border:0;opacity:0;pointer-events:none';
+  leadPrewarm.src = leadFormURL();
+  document.body.appendChild(leadPrewarm);
+}
+function dropLeadPrewarm() { leadPrewarm?.remove(); leadPrewarm = null; }
 function loadLeadWidget() {
   const widget = $('#leadGateWidget');
   if (!widget) return;
@@ -1538,9 +1567,13 @@ function loadLeadWidget() {
     addExternalLeadLink(widget, url, true);
     return;
   }
+  const box = document.createElement('div');
+  box.className = 'lead-frame-box';
   const frame = createLeadFrame(url, true);
   leadFrame = frame;
-  widget.appendChild(frame);
+  box.appendChild(frame);
+  widget.appendChild(box);
+  showLeadLoader();
   addExternalLeadLink(widget, url, false);
   retryVisibleLeadForm(url);
 }
@@ -1673,6 +1706,7 @@ function downloadPdf() {
   }, 60);
 }
 function restartQuiz() {
+  dropLeadPrewarm();
   generation++; activeRequest?.abort(); cancelAdvance();
   A = {}; idx = -1; userName = ''; PROFILE = null; TOKEN = ''; SERVER = null;
   startQuiz();
