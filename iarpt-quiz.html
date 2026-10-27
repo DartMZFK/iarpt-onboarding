@@ -555,7 +555,7 @@ button,a,input,textarea{-webkit-tap-highlight-color:transparent}button:focus-vis
 /* Публичная конфигурация теста. Секреты и BOT_TOKEN здесь не размещать.
    При пустом apiUrl ответы никуда не отправляются; результат и PDF строятся в браузере. */
 window.IARPT_QUIZ_RUNTIME = (function () {
-  var config = {apiUrl: 'https://72-56-39-50.sslip.io', botUsername: '', allowDownload: true, timeoutMs: 10000};
+  var config = {apiUrl: 'https://card.iarpt.ru', botUsername: '', allowDownload: true, timeoutMs: 15000};
   // В адресе только одноразовый канал и origin родителя; имени и ответов в URL нет.
   try {
     var params = new URLSearchParams(window.location.hash.slice(1));
@@ -1350,7 +1350,9 @@ async function finish() {
   $('#qArea').innerHTML = '<div class="prog"><i style="width:100%"></i></div><div class="pmeta"><b>Готово</b><span>Собираю вашу карту…</span></div><p class="big" data-stage-title role="status">Считываю ваши ответы. Не закрывайте страницу.</p>';
   resetScroll(); focusCurrent(); SERVER = null; resultMode = 'local';
   const requestGeneration = ++generation;
-  if (CONFIG.apiUrl) {
+  // Без номера карты форма ГК уйдёт с пустым доп. полем, поэтому сбой сети переспрашиваем.
+  for (let attempt = 0; CONFIG.apiUrl && attempt < 3 && !SERVER && requestGeneration === generation; attempt++) {
+    if (attempt) await new Promise(resolve => setTimeout(resolve, 1500 * attempt));
     activeRequest = new AbortController();
     const timeout = setTimeout(() => activeRequest?.abort(), CONFIG.timeoutMs);
     try {
