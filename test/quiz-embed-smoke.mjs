@@ -19,4 +19,8 @@ assert.ok(quiz.includes('Соглашаюсь с <a href="https://achernigova.ru
 assert.ok(quiz.includes('Соглашаюсь с <a href="http://achernigova.ru/document"'), 'quiz must retain the privacy-policy consent');
 assert.ok(quiz.includes('Даю согласие на получение <a href="http://mailing.iarpt.online/"'), 'quiz must retain the mailing consent');
 assert.ok(quiz.includes('consents: {'), 'quiz must submit the individual consents');
+assert.ok(quiz.includes('<input name="offer" type="checkbox" required>'), 'offer consent must be required');
+assert.ok(quiz.includes('<input name="privacy" type="checkbox" required>'), 'privacy consent must be required');
+assert.ok(quiz.includes('<input name="mailing" type="checkbox" required>'), 'mailing consent must be required');
+assert.ok(quiz.includes('window.location.assign(data.telegram)'), 'quiz must open the bot after a saved lead');
 assert.ok(!quiz.includes('GC_FORM_URL'), 'quiz must not embed the GetCourse widget');

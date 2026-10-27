@@ -1430,6 +1430,10 @@ async function submitNativeLead(event) {
     });
     const data = await response.json().catch(() => null);
     if (!response.ok || data?.gc !== 'ok') throw Object.assign(new Error('lead'), {status: response.status, body: data});
+    if (data?.telegram) {
+      window.location.assign(data.telegram);
+      return;
+    }
     const widget = $('#leadGateWidget');
     if (widget) widget.innerHTML = '<p class="small" role="status">Контакт сохранён в Академии.</p>';
     unlockLeadGate();
@@ -1446,9 +1450,9 @@ function loadLeadWidget() {
   widget.innerHTML = `<form class="lead-native" id="leadNativeForm">
     <label for="leadEmail">Электронная почта<input id="leadEmail" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" required placeholder="name@example.ru"></label>
     <label for="leadPhone">Телефон<input id="leadPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="40" placeholder="+7"></label>
-    <label class="lead-consent"><input name="offer" type="checkbox"><span>Соглашаюсь с <a href="https://achernigova.ru/offer" target="_blank" rel="noopener noreferrer">договором оферты</a></span></label>
-    <label class="lead-consent"><input name="privacy" type="checkbox"><span>Соглашаюсь с <a href="http://achernigova.ru/document" target="_blank" rel="noopener noreferrer">политикой конфиденциальности</a></span></label>
-    <label class="lead-consent"><input name="mailing" type="checkbox"><span>Даю согласие на получение <a href="http://mailing.iarpt.online/" target="_blank" rel="noopener noreferrer">информационных и маркетинговых рассылок</a></span></label>
+    <label class="lead-consent"><input name="offer" type="checkbox" required><span>Соглашаюсь с <a href="https://achernigova.ru/offer" target="_blank" rel="noopener noreferrer">договором оферты</a></span></label>
+    <label class="lead-consent"><input name="privacy" type="checkbox" required><span>Соглашаюсь с <a href="http://achernigova.ru/document" target="_blank" rel="noopener noreferrer">политикой конфиденциальности</a></span></label>
+    <label class="lead-consent"><input name="mailing" type="checkbox" required><span>Даю согласие на получение <a href="http://mailing.iarpt.online/" target="_blank" rel="noopener noreferrer">информационных и маркетинговых рассылок</a></span></label>
     <p class="lead-error" id="leadFormError" role="alert" hidden></p>
     <button class="btn block" id="leadFormSubmit" type="submit">Получить PDF-карту</button>
   </form>`;
