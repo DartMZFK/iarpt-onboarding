@@ -517,6 +517,7 @@ textarea:focus,input:focus{border-color:var(--red)}
 .lead-gate-head p{margin:0;color:var(--body);font-size:14px;line-height:1.6}
 .lead-gate-widget{min-height:160px;border-radius:18px;background:#f7f9fd;overflow:hidden}
 .lead-gate-widget iframe{display:block;width:100%!important;max-width:100%;border:0!important}
+.lead-gate-offline{padding:22px 20px;text-align:center;color:var(--ink)}.lead-gate-offline b{display:block;margin-bottom:6px;font-size:16px}.lead-gate-offline p{margin:0 0 14px;color:var(--body);font-size:13.5px;line-height:1.55}
 .lead-gate-external{display:block;margin:12px 0 0;color:var(--dark);font-size:13px;line-height:1.5;text-decoration:underline}
 .lead-gate-lock{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:#f3f6fc;color:#52627b;font-size:12.5px;line-height:1.55}
 .lead-gate-success{background:#edf5ef;color:#2f6941}
@@ -1417,12 +1418,32 @@ function addExternalLeadLink(widget, url, telegram) {
   link.textContent = 'Открыть форму GetCourse ↗';
   widget.append(note, link);
 }
+// Через VPN с зарубежным выходом GetCourse (и achernigova.online) не отвечает вовсе.
+// Проверяем доступность формы и вместо пустого/битого фрейма показываем понятную подсказку.
+let leadProbe = 0;
+function probeLeadForm(url) {
+  const id = ++leadProbe, ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10000);
+  fetch(url, {mode: 'no-cors', cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', signal: ctrl.signal})
+    .then(() => true, () => false)
+    .then(ok => { clearTimeout(timer); if (!ok && id === leadProbe && !leadUnlocked) showLeadOffline(); });
+}
+function showLeadOffline() {
+  const widget = $('#leadGateWidget');
+  if (!widget) return;
+  leadGateObserver?.disconnect(); leadGateObserver = null; leadFrame = null;
+  widget.innerHTML = `<div class="lead-gate-offline" role="alert"><b>Форма не загрузилась</b>
+    <p>Похоже, включён VPN: сервис GetCourse, через который выдаётся карта, через него не открывается. Отключите VPN и нажмите «Повторить» — ваши ответы сохранятся.</p>
+    <button class="btn" type="button" id="leadRetry">Повторить</button></div>`;
+  $('#leadRetry')?.addEventListener('click', loadLeadWidget);
+}
 function loadLeadWidget() {
   const widget = $('#leadGateWidget');
   if (!widget) return;
   leadGateObserver?.disconnect(); leadGateObserver = null; leadFrame = null;
   widget.innerHTML = '';
   const url = leadFormURL();
+  probeLeadForm(url);
   if (isTelegramBrowser()) {
     addExternalLeadLink(widget, url, true);
     return;

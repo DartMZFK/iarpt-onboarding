@@ -26,3 +26,4 @@ assert.ok(quiz.includes("timeoutMs: 6000") && quiz.includes('attempt < 2'), 'API
 assert.ok(quiz.includes('achernigova.online/pl/lite/widget/widget?id=1665352'), 'GetCourse widget restored');
 assert.ok(quiz.includes('id="leadGate"') && quiz.includes('function renderResult()'), 'server sync script markers present');
 console.log('quiz-embed-smoke: ok');
+assert.ok(quiz.includes('function probeLeadForm(') && quiz.includes('Отключите VPN'), 'GetCourse unreachable via VPN must show a clear retry notice');
