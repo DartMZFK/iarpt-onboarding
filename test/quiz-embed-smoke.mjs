@@ -26,4 +26,6 @@ assert.ok(quiz.includes("timeoutMs: 4000") && quiz.includes('attempt < 3') && qu
 assert.ok(quiz.includes('achernigova.online/pl/lite/widget/widget?id=1665352'), 'GetCourse widget restored');
 assert.ok(quiz.includes('id="leadGate"') && quiz.includes('function renderResult()'), 'server sync script markers present');
 console.log('quiz-embed-smoke: ok');
-assert.ok(quiz.includes('function raceLeadForm(') && quiz.includes('Отключите VPN'), 'GetCourse unreachable via VPN must show a clear retry notice');
+assert.ok(quiz.includes('function retryVisibleLeadForm(') && quiz.includes('Отключите VPN'), 'GetCourse unreachable via VPN must show a clear retry notice');
+assert.ok(!quiz.includes('visibility:hidden;') || !/LEAD_SHADOW = '[^']*visibility:hidden/.test(quiz), 'pending GetCourse frames must not be visibility:hidden');
+assert.ok(quiz.includes('leadFrame.replaceWith(fresh)'), 'a silent GetCourse attempt is replaced, not piled up');

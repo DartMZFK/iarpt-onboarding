@@ -515,7 +515,7 @@ textarea:focus,input:focus{border-color:var(--red)}
 .lead-gate-head .kicker{display:inline-block;margin-bottom:8px;color:#102550;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .lead-gate-head h3{margin:0 0 8px;font-family:'Cormorant SC',Georgia,'Times New Roman',serif;font-size:28px;line-height:1.12;color:var(--ink)}
 .lead-gate-head p{margin:0;color:var(--body);font-size:14px;line-height:1.6}
-.lead-gate-widget{min-height:160px;border-radius:18px;background:#f7f9fd;overflow:hidden}
+.lead-gate-widget{position:relative;min-height:160px;border-radius:18px;background:#f7f9fd;overflow:hidden}
 .lead-gate-widget iframe{display:block;width:100%!important;max-width:100%;border:0!important}
 .lead-gate-offline{padding:22px 20px;text-align:center;color:var(--ink)}.lead-gate-offline b{display:block;margin-bottom:6px;font-size:16px}.lead-gate-offline p{margin:0 0 14px;color:var(--body);font-size:13.5px;line-height:1.55}
 .lead-gate-external{display:block;margin:12px 0 0;color:var(--dark);font-size:13px;line-height:1.5;text-decoration:underline}
@@ -1432,66 +1432,77 @@ function addExternalLeadLink(widget, url, telegram) {
   link.textContent = 'Открыть форму GetCourse ↗';
   widget.append(note, link);
 }
-// GetCourse через VPN с зарубежным выходом: большая часть соединений виснет, удачное грузится за ~1 с.
+// GetCourse через VPN с зарубежным выходом: часть соединений виснет, удачное грузится за ~1 с.
 // Живая форма ГК всегда шлёт родителю служебные postMessage — это признак загрузки.
-// Пока форма молчит, каждые 3 с запускаем ещё одну попытку ПАРАЛЛЕЛЬНО (старые не обрываем: без VPN
-// на медленном интернете форма может просто грузиться дольше) и показываем первую ожившую.
-const LEAD_TRY_EVERY = 3000, LEAD_MAX_TRIES = 6, LEAD_HINT_AFTER = 9000;
-let leadRound = 0, leadFormSeen = false, leadTouched = false, leadTries = [], leadRoundKeep = false;
+// Зависшие попытки НЕ копим параллельно: они занимают соединения браузера с ГК (их мало на сайт),
+// и новые попытки встают в очередь. Поэтому зависшую попытку убираем и создаём свежую — ровно то,
+// что делает кнопка «Повторить». Окно ожидания растёт (3 → 4,5 → 7 → 10 с), а если страница формы
+// уже загрузилась (событие load), её не обрываем — это медленный, но живой интернет.
+const LEAD_FIRST_WAIT = 3000, LEAD_MAX_TRIES = 6, LEAD_HINT_AFTER = 9000;
+let leadRound = 0, leadFormSeen = false, leadTouched = false, leadPending = null;
 const LEAD_VISIBLE = 'width:100%;height:460px;border:0;overflow:hidden';
-const LEAD_HIDDEN = 'position:fixed;left:-9999px;top:0;width:600px;height:460px;border:0;visibility:hidden';
+const LEAD_SHADOW = 'position:absolute;left:0;top:0;width:100%;height:460px;border:0;opacity:0;pointer-events:none';
 function createLeadFrame(url, visible) {
   const frame = document.createElement('iframe');
   frame.name = '448'; frame.src = url;
-  frame.style.cssText = visible ? LEAD_VISIBLE : LEAD_HIDDEN;
+  frame.style.cssText = visible ? LEAD_VISIBLE : LEAD_SHADOW;
   frame.setAttribute('allowfullscreen', 'allowfullscreen');
   frame.title = 'Форма получения PDF-карты';
   // Вторая загрузка фрейма — форма отправлена и ГК повёл на переадресацию в бота.
   let loads = 0;
-  frame.addEventListener('load', () => { if (++loads >= 2 && frame === leadFrame && leadFormSeen) unlockLeadGate('frame'); });
+  frame.addEventListener('load', () => {
+    frame.dataset.loaded = '1';
+    if (++loads >= 2 && frame === leadFrame && leadFormSeen) unlockLeadGate('frame');
+  });
   return frame;
 }
-// keepCurrent: уже работающую форму не трогаем, пока новая (с номером карты) не оживёт.
-function raceLeadForm(url, keepCurrent) {
-  const widget = $('#leadGateWidget');
+// Видимая форма ещё не ожила: по таймеру пересоздаём её на том же месте.
+function retryVisibleLeadForm(url) {
   const round = ++leadRound, started = Date.now();
-  leadRoundKeep = !!keepCurrent; leadTries = [];
-  const spawn = () => {
-    const anchor = leadTries[leadTries.length - 1] || leadFrame;
-    const frame = createLeadFrame(url, false);
-    leadTries.push(frame);
-    widget.insertBefore(frame, anchor ? anchor.nextSibling : widget.firstChild);
-  };
-  if (keepCurrent) spawn(); else leadFormSeen = false;
+  leadFormSeen = false; leadPending = null;
+  let tries = 1, wait = LEAD_FIRST_WAIT, extended = false;
   const tick = () => {
-    if (round !== leadRound || leadUnlocked || Date.now() - started > 60000) return;
-    if (!keepCurrent && leadFormSeen) return;
-    if (!keepCurrent && Date.now() - started >= LEAD_HINT_AFTER) showLeadOffline();
-    if (leadTries.length < LEAD_MAX_TRIES) spawn();
-    setTimeout(tick, LEAD_TRY_EVERY);
+    if (round !== leadRound || leadFormSeen || leadUnlocked || !leadFrame) return;
+    if (Date.now() - started >= LEAD_HINT_AFTER) showLeadOffline();
+    if (leadFrame.dataset.loaded === '1' && !extended) { extended = true; setTimeout(tick, 6000); return; }
+    if (tries >= LEAD_MAX_TRIES) return;
+    const fresh = createLeadFrame(url, true);
+    leadFrame.replaceWith(fresh); leadFrame = fresh;
+    tries++; extended = false; wait = Math.min(Math.round(wait * 1.5), 15000);
+    setTimeout(tick, wait);
   };
-  setTimeout(tick, LEAD_TRY_EVERY);
+  setTimeout(tick, wait);
 }
-function leadFrameAlive(frame) {
-  const fresh = leadTries.includes(frame);
-  if (!fresh && frame !== leadFrame) return;
-  if (leadRoundKeep && !fresh) return;                 // старая форма и так видна
-  if (leadRoundKeep && leadTouched) {                  // человек уже заполняет старую — новую убираем
-    leadTries.forEach(f => f.remove()); leadTries = []; leadRound++; return;
-  }
+// Видимая форма уже работает, а пришёл номер карты: готовим новую форму прозрачной поверх места
+// старой (не скрытой — скрытые фреймы браузер притормаживает) и подменяем, когда оживёт.
+function prepareLeadFormWithCard(url) {
   const widget = $('#leadGateWidget');
-  widget?.querySelectorAll('iframe').forEach(f => { if (f !== frame) f.remove(); });
-  frame.style.cssText = LEAD_VISIBLE;
-  leadFrame = frame; leadTries = []; leadRound++; leadRoundKeep = false;
-  leadFormSeen = true;
-  widget?.querySelector('.lead-gate-offline')?.remove();
+  const round = ++leadRound;
+  let tries = 0;
+  const attempt = () => {
+    if (round !== leadRound || leadUnlocked || leadTouched) { leadPending?.remove(); leadPending = null; return; }
+    if (tries >= 3) { leadPending?.remove(); leadPending = null; return; }
+    leadPending?.remove();
+    leadPending = createLeadFrame(url, false);
+    widget.insertBefore(leadPending, leadFrame.nextSibling);
+    tries++;
+    setTimeout(attempt, 6000);
+  };
+  attempt();
 }
 window.addEventListener('message', event => {
   if (event.origin !== 'https://achernigova.online') return;
-  const frame = [...document.querySelectorAll('#leadGateWidget iframe')].find(f => f.contentWindow === event.source);
-  if (!frame) return;
-  if (frame === leadFrame && !leadRoundKeep) { if (!leadFormSeen) leadFrameAlive(frame); return; }
-  if (frame !== leadFrame) leadFrameAlive(frame);
+  if (leadFrame && event.source === leadFrame.contentWindow) {
+    if (!leadFormSeen) { leadFormSeen = true; $('#leadGateWidget .lead-gate-offline')?.remove(); }
+    return;
+  }
+  if (leadPending && event.source === leadPending.contentWindow) {
+    const fresh = leadPending; leadPending = null; leadRound++;
+    if (leadTouched || leadUnlocked) { fresh.remove(); return; }
+    leadFrame.remove();
+    fresh.style.cssText = LEAD_VISIBLE;
+    leadFrame = fresh; leadFormSeen = true;
+  }
 });
 // Фокус ушёл во фрейм формы — человек начал её заполнять, пересобирать форму уже нельзя.
 window.addEventListener('blur', () => setTimeout(() => {
@@ -1520,7 +1531,7 @@ function showLeadOffline() {
 function loadLeadWidget() {
   const widget = $('#leadGateWidget');
   if (!widget) return;
-  leadGateObserver?.disconnect(); leadGateObserver = null; leadFrame = null; leadTries = []; leadRound++;
+  leadGateObserver?.disconnect(); leadGateObserver = null; leadFrame = null; leadPending = null; leadRound++;
   widget.innerHTML = '';
   const url = leadFormURL();
   if (isTelegramBrowser()) {
@@ -1531,14 +1542,14 @@ function loadLeadWidget() {
   leadFrame = frame;
   widget.appendChild(frame);
   addExternalLeadLink(widget, url, false);
-  raceLeadForm(url, false);
+  retryVisibleLeadForm(url);
 }
 // Номер карты пришёл, когда форма уже показана: новую форму готовим в фоне и подменяем,
 // только когда она ожила и человек ещё не начал заполнять старую.
 function refreshLeadFormWithCard() {
   if (isTelegramBrowser() || !leadFrame) { loadLeadWidget(); return; }
   if (!leadFormSeen) { loadLeadWidget(); return; }
-  raceLeadForm(leadFormURL(), true);
+  prepareLeadFormWithCard(leadFormURL());
 }
 window.addEventListener('message', event => {
   const d = event.data;
