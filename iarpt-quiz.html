@@ -1405,7 +1405,8 @@ function loadLeadWidget() {
     + (SERVER ? '&iarpt_card=' + encodeURIComponent(SERVER.id) : '')
     + '&ref=' + encodeURIComponent(document.referrer)
     + '&loc=' + encodeURIComponent(window.location.href);
-  frame.style.cssText = 'width:100%;height:0;border:0;overflow:hidden';
+  // ponytail: visible fallback for WebViews that drop the GetCourse resize message.
+  frame.style.cssText = 'width:100%;height:460px;border:0;overflow:hidden';
   frame.setAttribute('allowfullscreen', 'allowfullscreen');
   widget.appendChild(frame);
   bindLeadGateFrame();
