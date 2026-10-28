@@ -1192,23 +1192,30 @@ function buildPdf(p, name, cfg){
            ['Видеоурок 2','Ваша соматическая\nподпись страха','Научитесь замечать, как связаны мысли, переживания и отклик тела в вашей ситуации.'],
            ['Видеоурок 3','Архитектура\nвашего будущего','Соберёте наблюдения из карты и наметите посильный шаг к своей цели.']];
   L.forEach((l,i)=>{
-    cardBox(cyy,41.6);
+    cardBox(cyy,35.6);
     doc.setFillColor(...PEACH);doc.circle(30.65,cyy+11.95,5.65,'F');
     F('L','bold',20,RED);T(String(i+1),30.65,cyy+14.5,{align:'center'});
     lbl(l[0],42.0,cyy+6.2);
-    F('L','bold',18,INK);l[1].split('\n').forEach((t,k)=>T(t,42.0,cyy+15.5+k*7.8));
-    F('M','normal',11.6,BODY);wrap(l[2],140).forEach((t,k)=>T(t,42.0,cyy+30.5+k*6.0));
-    if(i<2){doc.setDrawColor(...GREY);doc.setLineWidth(1.0);const ay=cyy+41.6+0.6;doc.line(30.7,ay,30.7,ay+1.4);doc.line(29.8,ay+0.5,30.7,ay+1.5);doc.line(30.7,ay+1.5,31.6,ay+0.5);}
-    cyy+=44.4;
+    F('L','bold',18,INK);l[1].split('\n').forEach((t,k)=>T(t,42.0,cyy+13.8+k*7.0));
+    F('M','normal',11.6,BODY);wrap(l[2],140).forEach((t,k)=>T(t,42.0,cyy+27.0+k*5.5));
+    if(i<2){doc.setDrawColor(...GREY);doc.setLineWidth(1.0);const ay=cyy+35.6+0.6;doc.line(30.7,ay,30.7,ay+1.4);doc.line(29.8,ay+0.5,30.7,ay+1.5);doc.line(30.7,ay+1.5,31.6,ay+0.5);}
+    cyy+=38.4;
   });
-  const by8=cyy-44.4+41.6;
+  const by8=cyy-38.4+35.6;
   lbl('Бесплатный просмотр в Telegram-боте',M,by8+6.2);
   const bt=by8+9.9;
-  doc.setFillColor(...TG);doc.roundedRect(M,bt,CW,18,9,9,'F');
-  doc.setFillColor(...WHITE);doc.triangle(42.9,bt+7.6,51.7,bt+4.8,46.3,bt+13.3,'F');doc.setFillColor(...TG);doc.triangle(46.3,bt+9.4,51.7,bt+4.8,46.3,bt+13.3,'F');doc.setFillColor(...WHITE);doc.triangle(47.3,bt+10.2,51.7,bt+4.8,46.3,bt+13.3,'F');
-  F('M','bold',16,WHITE);T('Перейти к просмотру видеоурока в бот',56.7,bt+10.9);
-  if(cfg&&cfg.botUrl)doc.link(M,bt,CW,18,{url:cfg.botUrl});
-  F('M','normal',9,GREY);T('В боте нажмите кнопку «Перейти к видеоурокам».',M,bt+24.0);
+  const ctaHeight=36,ctaBlue=[0,121,181];
+  doc.setFillColor(208,228,237);doc.roundedRect(M,bt+1.2,CW,ctaHeight,9,9,'F');
+  doc.setFillColor(...ctaBlue);doc.roundedRect(M,bt,CW,ctaHeight,9,9,'F');
+  doc.setFillColor(...WHITE);doc.circle(M+18,bt+18,10.5,'F');
+  doc.setFillColor(...ctaBlue);doc.triangle(M+12,bt+16.1,M+25.2,bt+11.9,M+17.1,bt+24.65,'F');
+  doc.setFillColor(...WHITE);doc.triangle(M+17.1,bt+18.8,M+25.2,bt+11.9,M+17.1,bt+24.65,'F');
+  doc.setFillColor(...ctaBlue);doc.triangle(M+18.6,bt+20,M+25.2,bt+11.9,M+17.1,bt+24.65,'F');
+  F('M','bold',25,WHITE);T('Перейти к урокам',M+35,bt+17.0);
+  F('M','normal',12.5,WHITE);T('Смотреть бесплатно в Telegram',M+35,bt+25.0);
+  doc.setDrawColor(...WHITE);doc.setLineWidth(1.1);doc.line(R-19,bt+18,R-11,bt+18);doc.line(R-14.5,bt+14.5,R-11,bt+18);doc.line(R-14.5,bt+21.5,R-11,bt+18);
+  if(cfg&&cfg.botUrl)doc.link(M,bt,CW,ctaHeight,{url:cfg.botUrl});
+  F('M','normal',9,GREY);T('В боте нажмите кнопку «Перейти к видеоурокам».',M,bt+ctaHeight+6.0);
 
   doc.setProperties({title:'Карта вашего Внутреннего защитника от изменений — '+first,author:'Академия Психологии АРПТ'});
   return doc;
