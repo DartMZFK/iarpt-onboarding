@@ -31,3 +31,4 @@ assert.ok(!quiz.includes('visibility:hidden;') || !/LEAD_SHADOW = '[^']*visibili
 assert.ok(quiz.includes('leadFrame.replaceWith(fresh)'), 'a silent GetCourse attempt is replaced, not piled up');
 assert.ok(quiz.includes('function prewarmLeadForm(') && quiz.includes('if (idx === 0) prewarmLeadForm();'), 'GetCourse form must be prewarmed on the last question');
 assert.ok(quiz.includes('lead-gate-loader') && quiz.includes('Загружаем форму'), 'form preloader');
+assert.ok(!/class="tiles"/.test(quiz.slice(quiz.indexOf('function renderResult('), quiz.indexOf('function downloadPdf('))), 'result screen shows only the header before the form');

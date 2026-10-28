@@ -1688,23 +1688,12 @@ function leadMessage(botUrl) {
 function renderResult() {
   leadTouched = false;
   currentView = 'result'; PROFILE = compute(A); TOKEN = token(PROFILE);
-  const p = PROFILE, first = userName.split(/\s+/)[0], botUrl = telegramUrl();
-  const nl = t => esc(t.replace(/\n/g, ' '));
-  const react = p.react.length > 1 ? nl(p.react[0].tile) + ' · ' + nl(p.react[1].tile).toLowerCase() : nl(p.react[0].tile);
+  const botUrl = telegramUrl();
   const intro = 'Чтобы забрать её, заполните данные в форме ниже, а затем получите карту в чат-боте Академии.';
   const message = leadMessage(botUrl);
   $('#backBtn').style.visibility = 'hidden';
-  $('#qArea').innerHTML = `<div class="rhero"><span class="kicker">Карта собрана</span><h2>Ваша персональная карта готова</h2><p>${intro}</p></div>
-    <div class="tiles">
-      <div class="tile red"><small>Главная сфера</small><b>${nl(p.sphere.tile)}</b></div>
-      <div class="tile"><small>Движение к цели</small><b>${nl(p.move.tile)}</b></div>
-      <div class="tile"><small>Перед важным шагом</small><b>${react}</b></div>
-      <div class="tile"><small>Телесный отклик</small><b>${nl(p.body.tile)}</b></div>
-      <div class="tile"><small>Что важно сохранить</small><b>${nl(p.keep.tile)}</b></div>
-      <div class="tile"><small>Внутренняя опора</small><b>${nl(p.support.tile)}</b></div>
-      <div class="tile wide"><small>Ваш темп</small><b>${nl(p.tempo.tile)}</b></div>
-    </div>
-    <p class="small"><button class="link" type="button" onclick="restartQuiz()">Пройти заново</button></p>`;
+  // Перед формой только заголовок: плитки с результатами человек увидит в PDF-карте.
+  $('#qArea').innerHTML = `<div class="rhero"><span class="kicker">Карта собрана</span><h2>Ваша персональная карта готова</h2><p>${intro}</p></div>`;
   showLeadGate(botUrl, message);
   resetScroll(); focusCurrent();
 }
