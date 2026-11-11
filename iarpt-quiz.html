@@ -1214,7 +1214,7 @@ function buildPdf(p, name, cfg){
   F('M','bold',25,WHITE);T('Перейти к урокам',M+35,bt+17.0);
   F('M','normal',12.5,WHITE);T('Смотреть бесплатно в Telegram',M+35,bt+25.0);
   doc.setDrawColor(...WHITE);doc.setLineWidth(1.1);doc.line(R-19,bt+18,R-11,bt+18);doc.line(R-14.5,bt+14.5,R-11,bt+18);doc.line(R-14.5,bt+21.5,R-11,bt+18);
-  if(cfg&&cfg.botUrl)doc.link(M,bt,CW,ctaHeight,{url:cfg.botUrl});
+  doc.link(M,bt,CW,ctaHeight,{url:'https://t.me/iarpt_quiz_bot'});
   F('M','normal',9,GREY);T('В боте нажмите кнопку «Перейти к видеоурокам».',M,bt+ctaHeight+6.0);
 
   doc.setProperties({title:'Карта вашего Внутреннего защитника от изменений — '+first,author:'Академия Психологии АРПТ'});
