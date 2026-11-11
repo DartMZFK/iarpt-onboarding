@@ -3,3 +3,7 @@ test-tilda.html
 src/index.html
 src/test.html
 test-zero.html
+server/node_modules/
+server/engine.js
+server/data/
+server/.env

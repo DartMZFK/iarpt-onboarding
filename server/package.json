@@ -1,0 +1,17 @@
+{
+  "name": "iarpt-card",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Server-side iARPT result and PDF service",
+  "main": "server.js",
+  "scripts": {
+    "build:engine": "node build-engine.js ../iarpt-quiz.html engine.js",
+    "check": "node --check server.js && node --check build-engine.js",
+    "test": "node ../test/server-pdf-engine.mjs"
+  },
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "dependencies": {
+    "jspdf": "^2.5.1"
+  }
+}
